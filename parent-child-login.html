@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>亲子登录页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 40px;
+        }
+
+        /* 移动端预览框 */
+        .mobile-frame {
+            width: 375px;
+            height: 812px;
+            background-color: #fff;
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            border: 10px solid #333;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            height: 44px;
+            background-color: #FFB6C1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        /* 登录页面内容 */
+        .login-container {
+            padding: 40px 20px;
+            height: calc(100% - 44px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(135deg, #FFFAF0 0%, #FFF0F5 100%);
+        }
+
+        /* 标题区域 */
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background-color: #FF69B4;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,105,180,0.3);
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FF69B4;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: #757575;
+        }
+
+        /* 表单区域 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            height: 50px;
+            padding: 0 16px;
+            border: 2px solid #FFE4E1;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background-color: white;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .form-group input:focus {
+            border-color: #FF69B4;
+            box-shadow: 0 0 0 3px rgba(255,105,180,0.1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 70%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #757575;
+            font-size: 14px;
+        }
+
+        /* 忘记密码 */
+        .forgot-password {
+            text-align: right;
+            margin: 10px 0;
+        }
+
+        .forgot-password a {
+            color: #2196F3;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #1976D2;
+            text-decoration: underline;
+        }
+
+        /* 登录按钮 */
+        .login-btn {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255,105,180,0.3);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255,105,180,0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 底部链接 */
+        .login-footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #757575;
+        }
+
+        .login-footer a {
+            color: #FF69B4;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .login-footer a:hover {
+            color: #FF1493;
+            text-decoration: underline;
+        }
+
+        /* 设计说明部分 */
+        .design-notes {
+            max-width: 400px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .design-notes h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #FFE4E1;
+            padding-bottom: 10px;
+        }
+
+        .design-notes h3 {
+            font-size: 16px;
+            color: #FF69B4;
+            margin: 15px 0 10px 0;
+        }
+
+        .design-notes p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .design-notes ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .design-notes li {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .mobile-frame {
+                width: 100%;
+                max-width: 375px;
+                height: 812px;
+            }
+
+            .design-notes {
+                max-width: 100%;
+                width: 100%;
+                max-width: 375px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 移动端登录页面 -->
+    <div class="mobile-frame">
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div>9:41</div>
+            <div>信号 电池</div>
+        </div>
+        
+        <!-- 登录内容 -->
+        <div class="login-container">
+            <!-- 标题区域 -->
+            <div class="login-header">
+                <div class="logo">❤️</div>
+                <h1 class="login-title">爱宝贝儿</h1>
+                <p class="login-subtitle">爱宝贝儿，还有爱宝贝的你</p>
+            </div>
+            
+            <!-- 登录表单 -->
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">账号</label>
+                    <input type="text" id="username" placeholder="请输入账号" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码" required>
+                    <span class="password-toggle" onclick="togglePassword()">显示</span>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#" onclick="alert('忘记密码功能开发中')">忘记密码？</a>
+                </div>
+                
+                <button type="submit" class="login-btn">登录</button>
+            </form>
+            
+            <!-- 底部链接 -->
+            <div class="login-footer">
+                还没有账号？<a href="#" onclick="alert('注册功能开发中')">立即注册</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设计说明 -->
+    <div class="design-notes">
+        <h2>设计说明</h2>
+        
+        <h3>设计风格</h3>
+        <p>采用亲子风格设计，整体色调以柔和的粉色和白色为主，营造出温馨、甜蜜的氛围，符合亲子产品的定位。</p>
+        
+        <h3>视觉元素</h3>
+        <ul>
+            <li>使用圆角设计，增加亲和力和友好感</li>
+            <li>添加柔和的阴影效果，增强层次感</li>
+            <li>采用爱心图标作为logo，突出"爱"的主题</li>
+            <li>色彩搭配柔和，符合亲子产品的温馨氛围</li>
+        </ul>
+        
+        <h3>交互设计</h3>
+        <ul>
+            <li>输入框聚焦时的边框颜色变化和阴影效果</li>
+            <li>登录按钮的悬停和点击动画</li>
+            <li>密码显示/隐藏功能</li>
+            <li>忘记密码和注册链接的点击反馈</li>
+            <li>表单提交的交互反馈</li>
+        </ul>
+        
+        <h3>布局设计</h3>
+        <p>采用居中布局，确保在移动设备上显示美观。整体结构清晰，包含：</p>
+        <ul>
+            <li>顶部状态栏模拟</li>
+            <li>品牌标识区域</li>
+            <li>登录表单区域</li>
+            <li>辅助链接区域</li>
+        </ul>
+        
+        <h3>响应式设计</h3>
+        <p>页面适配不同屏幕尺寸，在桌面端显示为并排布局，在移动端显示为垂直布局，确保良好的用户体验。</p>
+    </div>
+
+    <script>
+        // 密码显示/隐藏功能
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '隐藏';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '显示';
+            }
+        }
+        
+        // 登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username && password) {
+                alert('登录成功！欢迎回来，' + username);
+            } else {
+                alert('请填写完整的账号和密码');
+            }
+        });
+        
+        // 输入框交互效果
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

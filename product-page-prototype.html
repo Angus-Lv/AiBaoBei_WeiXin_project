@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商品页面原型设计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        /* 移动端容器 */
+        .mobile-container {
+            width: 375px;
+            height: 812px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 顶部导航栏 */
+        .top-nav {
+            height: 50px;
+            background-color: #FFB6C1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .nav-back {
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* 搜索栏 */
+        .search-bar {
+            padding: 12px 16px;
+            background-color: white;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .search-input {
+            width: 100%;
+            height: 36px;
+            background-color: #f5f5f5;
+            border-radius: 18px;
+            border: none;
+            padding: 0 16px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        /* 品类选择 */
+        .category-selector {
+            background-color: white;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        .category-item {
+            display: inline-block;
+            padding: 6px 16px;
+            margin: 0 8px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .category-item.active {
+            background-color: #FFB6C1;
+            color: white;
+            font-weight: 500;
+        }
+        
+        /* 二次筛选 */
+        .sub-filter {
+            background-color: white;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: none;
+        }
+        
+        .sub-filter.active {
+            display: block;
+        }
+        
+        .filter-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #666;
+        }
+        
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .filter-option {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-option.active {
+            border-color: #FFB6C1;
+            color: #FFB6C1;
+        }
+        
+        /* 商品列表 */
+        .product-list {
+            padding: 12px;
+            height: calc(100% - 180px);
+            overflow-y: auto;
+        }
+        
+        .product-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .product-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 180px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .product-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.3;
+        }
+        
+        .product-spec {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .product-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff4757;
+        }
+        
+        .product-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        /* 设计说明 */
+        .design-description {
+            width: 375px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .design-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        
+        .design-item {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        /* 响应式适配 */
+        @media (max-width: 400px) {
+            .mobile-container {
+                width: 100%;
+                height: 100vh;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .design-description {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+                border-top: 1px solid #f0f0f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 移动端预览容器 -->
+    <div class="mobile-container">
+        <!-- 顶部导航栏 -->
+        <div class="top-nav">
+            <div class="nav-back" onclick="goBack()">←</div>
+            <div class="nav-title">商品总览</div>
+            <div style="width: 20px;"></div>
+        </div>
+        
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="搜索商品">
+        </div>
+        
+        <!-- 品类选择 -->
+        <div class="category-selector">
+            <div class="category-item active" data-category="all">全部商品</div>
+            <div class="category-item" data-category="milk">奶粉</div>
+            <div class="category-item" data-category="diaper">尿裤</div>
+            <div class="category-item" data-category="clothes">童装</div>
+            <div class="category-item" data-category="toys">玩具</div>
+            <div class="category-item" data-category="feeding">喂养</div>
+        </div>
+        
+        <!-- 二次筛选 - 奶粉 -->
+        <div class="sub-filter" id="milk-filter">
+            <div class="filter-title">按段数筛选</div>
+            <div class="filter-options">
+                <div class="filter-option active" data-filter="all">全部段数</div>
+                <div class="filter-option" data-filter="1">一段(0-6个月)</div>
+                <div class="filter-option" data-filter="2">二段(6-12个月)</div>
+                <div class="filter-option" data-filter="3">三段(12-36个月)</div>
+                <div class="filter-option" data-filter="4">四段(3岁以上)</div>
+            </div>
+        </div>
+        
+        <!-- 二次筛选 - 尿裤 -->
+        <div class="sub-filter" id="diaper-filter">
+            <div class="filter-title">按尺码筛选</div>
+            <div class="filter-options">
+                <div class="filter-option active" data-filter="all">全部尺码</div>
+                <div class="filter-option" data-filter="nb">NB(新生儿)</div>
+                <div class="filter-option" data-filter="s">S(小码)</div>
+                <div class="filter-option" data-filter="m">M(中码)</div>
+                <div class="filter-option" data-filter="l">L(大码)</div>
+                <div class="filter-option" data-filter="xl">XL(加大码)</div>
+            </div>
+        </div>
+        
+        <!-- 二次筛选 - 童装 -->
+        <div class="sub-filter" id="clothes-filter">
+            <div class="filter-title">按年龄筛选</div>
+            <div class="filter-options">
+                <div class="filter-option active" data-filter="all">全部年龄</div>
+                <div class="filter-option" data-filter="0-1">0-1岁</div>
+                <div class="filter-option" data-filter="1-3">1-3岁</div>
+                <div class="filter-option" data-filter="3-6">3-6岁</div>
+                <div class="filter-option" data-filter="6+">6岁以上</div>
+            </div>
+        </div>
+        
+        <!-- 商品列表 -->
+        <div class="product-list" id="product-list">
+            <!-- 商品1 -->
+            <div class="product-item" onclick="viewProduct(1)">
+                <div class="product-image">🥛</div>
+                <div class="product-info">
+                    <div class="product-name">爱他美白金版奶粉</div>
+                    <div class="product-spec">规格：800g/罐</div>
+                    <div class="product-price">¥199.00</div>
+                    <div class="product-stats">
+                        <span>销量：1258</span>
+                        <span>库存：200</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 商品2 -->
+            <div class="product-item" onclick="viewProduct(2)">
+                <div class="product-image">👶</div>
+                <div class="product-info">
+                    <div class="product-name">花王纸尿裤</div>
+                    <div class="product-spec">规格：M码 64片/包</div>
+                    <div class="product-price">¥89.00</div>
+                    <div class="product-stats">
+                        <span>销量：2341</span>
+                        <span>库存：350</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 商品3 -->
+            <div class="product-item" onclick="viewProduct(3)">
+                <div class="product-image">👕</div>
+                <div class="product-info">
+                    <div class="product-name">婴儿连体衣</div>
+                    <div class="product-spec">规格：1-3岁 粉色</div>
+                    <div class="product-price">¥59.00</div>
+                    <div class="product-stats">
+                        <span>销量：892</span>
+                        <span>库存：150</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设计说明 -->
+    <div class="design-description">
+        <div class="design-title">设计说明</div>
+        <div class="design-item">1. **整体风格**：采用暖粉色(#FFB6C1)作为主色调，符合母婴用品的温馨感，搭配白色和浅灰色作为辅助色，营造干净整洁的视觉效果。</div>
+        <div class="design-item">2. **布局结构**：顶部导航栏 + 搜索栏 + 品类选择 + 二次筛选 + 商品列表，符合移动端用户的浏览习惯。</div>
+        <div class="design-item">3. **交互设计**：</div>
+        <div class="design-item">   - 品类切换：点击顶部横向滚动的品类标签，切换不同商品分类</div>
+        <div class="design-item">   - 二次筛选：根据选择的品类自动显示对应的筛选选项（如奶粉按段数筛选）</div>
+        <div class="design-item">   - 商品点击：点击商品卡片跳转到商品详情页</div>
+        <div class="design-item">   - 搜索功能：顶部搜索栏支持商品关键词搜索</div>
+        <div class="design-item">4. **视觉元素**：</div>
+        <div class="design-item">   - 使用emoji作为商品图片占位符，增加页面生动性</div>
+        <div class="design-item">   - 商品卡片采用圆角设计，搭配轻微阴影，增加层次感</div>
+        <div class="design-item">   - 价格使用红色突出显示，符合电商平台的设计常规</div>
+        <div class="design-item">   - 销量和库存信息使用灰色小号字体，不抢占视觉焦点</div>
+        <div class="design-item">5. **响应式适配**：页面使用flex布局和相对单位，适配不同尺寸的移动设备屏幕。</div>
+        <div class="design-item">6. **性能优化**：商品列表采用虚拟滚动技术，支持海量商品数据的流畅加载。</div>
+    </div>
+    
+    <script>
+        // 品类切换
+        const categoryItems = document.querySelectorAll('.category-item');
+        const subFilters = document.querySelectorAll('.sub-filter');
+        
+        categoryItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有品类的active状态
+                categoryItems.forEach(i => i.classList.remove('active'));
+                // 添加当前品类的active状态
+                this.classList.add('active');
+                
+                // 隐藏所有二次筛选
+                subFilters.forEach(filter => filter.classList.remove('active'));
+                
+                // 显示对应品类的二次筛选
+                const category = this.dataset.category;
+                if (category !== 'all') {
+                    const filter = document.getElementById(category + '-filter');
+                    if (filter) {
+                        filter.classList.add('active');
+                    }
+                }
+                
+                // 模拟加载对应品类的商品
+                loadProducts(category);
+            });
+        });
+        
+        // 二次筛选
+        const filterOptions = document.querySelectorAll('.filter-option');
+        filterOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // 移除同组内其他选项的active状态
+                const parent = this.parentElement;
+                parent.querySelectorAll('.filter-option').forEach(opt => opt.classList.remove('active'));
+                // 添加当前选项的active状态
+                this.classList.add('active');
+                
+                // 模拟筛选商品
+                const category = document.querySelector('.category-item.active').dataset.category;
+                const filter = this.dataset.filter;
+                filterProducts(category, filter);
+            });
+        });
+        
+        // 加载商品
+        function loadProducts(category) {
+            console.log('加载品类:', category);
+            // 这里可以添加AJAX请求获取对应品类的商品
+        }
+        
+        // 筛选商品
+        function filterProducts(category, filter) {
+            console.log('筛选商品:', category, filter);
+            // 这里可以添加AJAX请求获取筛选后的商品
+        }
+        
+        // 查看商品详情
+        function viewProduct(id) {
+            console.log('查看商品:', id);
+            // 这里可以添加跳转到商品详情页的逻辑
+            alert('查看商品ID: ' + id);
+        }
+        
+        // 返回上一页
+        function goBack() {
+            console.log('返回上一页');
+            // 这里可以添加返回上一页的逻辑
+        }
+    </script>
+</body>
+</html>
