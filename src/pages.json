@@ -82,7 +82,8 @@
 			"style": {
 				"navigationBarTitleText": "消息通知",
 				"navigationBarBackgroundColor": "#FFB6C1",
-				"navigationBarTextStyle": "white"
+				"navigationBarTextStyle": "white",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -200,20 +201,20 @@
 			{
 				"pagePath": "pages/index/index",
 				"text": "首页",
-				"iconPath": "/static/tabbar/home.png",
-				"selectedIconPath": "/static/tabbar/home-active.png"
+				"iconPath": "/src/static/tabbar/home.png",
+				"selectedIconPath": "/src/static/tabbar/home-active.png"
 			},
 			{
 				"pagePath": "pages/products/index",
 				"text": "商品",
-				"iconPath": "/static/tabbar/products.png",
-				"selectedIconPath": "/static/tabbar/products-active.png"
+				"iconPath": "/src/static/tabbar/products.png",
+				"selectedIconPath": "/src/static/tabbar/products-active.png"
 			},
 			{
 				"pagePath": "pages/profile/index",
 				"text": "我的",
-				"iconPath": "/static/tabbar/profile.png",
-				"selectedIconPath": "/static/tabbar/profile-active.png"
+				"iconPath": "/src/static/tabbar/profile.png",
+				"selectedIconPath": "/src/static/tabbar/profile-active.png"
 			}
 		]
 	}

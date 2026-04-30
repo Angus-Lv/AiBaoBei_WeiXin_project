@@ -38,29 +38,29 @@ const emit = defineEmits(['change']);
 const currentPath = ref('');
 const tabbarItems = ref([]);
 
-const defaultItems = [
+const defaultItems = ref([
   {
     path: '/pages/index/index',
     text: '首页',
-    icon: '/static/tabbar/home.png',
-    selectedIcon: '/static/tabbar/home-active.png',
+    icon: '/src/static/tabbar/home.png',
+    selectedIcon: '/src/static/tabbar/home-active.png',
     badge: 0
   },
   {
     path: '/pages/products/index',
     text: '商品',
-    icon: '/static/tabbar/products.png',
-    selectedIcon: '/static/tabbar/products-active.png',
+    icon: '/src/static/tabbar/products.png',
+    selectedIcon: '/src/static/tabbar/products-active.png',
     badge: 0
   },
   {
     path: '/pages/profile/index',
     text: '我的',
-    icon: '/static/tabbar/profile.png',
-    selectedIcon: '/static/tabbar/profile-active.png',
+    icon: '/src/static/tabbar/profile.png',
+    selectedIcon: '/src/static/tabbar/profile-active.png',
     badge: 0
   }
-];
+]);
 
 const initTabbarItems = () => {
   tabbarItems.value = props.items.length > 0 ? props.items : defaultItems;

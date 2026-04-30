@@ -46,9 +46,9 @@ import { ref, onMounted } from 'vue';
 
 // 响应式数据
 const favoritesList = ref([
-  { id: 1, image: '/static/logo.png', name: '爱他美白金版奶粉', price: '199', sales: 1258 },
-  { id: 2, image: '/static/logo.png', name: '花王纸尿裤', price: '89', sales: 2341 },
-  { id: 4, image: '/static/logo.png', name: '婴儿安抚玩具', price: '39', sales: 1567 }
+  { id: 1, image: '/src/static/logo.png', name: '爱他美白金版奶粉', price: '199', sales: 1258 },
+  { id: 2, image: '/src/static/logo.png', name: '花王纸尿裤', price: '89', sales: 2341 },
+  { id: 4, image: '/src/static/logo.png', name: '婴儿安抚玩具', price: '39', sales: 1567 }
 ]);
 
 // 状态栏高度

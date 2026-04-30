@@ -48,12 +48,12 @@ import { ref, onMounted } from 'vue';
 
 // 响应式数据
 const hotProducts = ref([
-  { id: 1, image: '/static/alice.png', name: '爱他美白金版奶粉', price: 199, originalPrice: 299, spec: '800g/罐', sales: 1258 },
-  { id: 2, image: '/static/alice.png', name: '花王纸尿裤', price: 89, originalPrice: 129, spec: 'M码 64片/包', sales: 2341 },
-  { id: 3, image: '/static/alice.png', name: '婴儿连体衣', price: 59, originalPrice: 99, spec: '1-3岁 粉色', sales: 892 },
-  { id: 4, image: '/static/alice.png', name: '婴儿安抚玩具', price: 39, originalPrice: 69, spec: '毛绒玩具', sales: 1567 },
-  { id: 5, image: '/static/alice.png', name: '贝亲奶瓶', price: 79, originalPrice: 99, spec: '240ml', sales: 987 },
-  { id: 6, image: '/static/alice.png', name: '婴儿湿巾', price: 29, originalPrice: 49, spec: '80抽/包', sales: 3456 }
+  { id: 1, image: '/src/static/alice.png', name: '爱他美白金版奶粉', price: 199, originalPrice: 299, spec: '800g/罐', sales: 1258 },
+  { id: 2, image: '/src/static/alice.png', name: '花王纸尿裤', price: 89, originalPrice: 129, spec: 'M码 64片/包', sales: 2341 },
+  { id: 3, image: '/src/static/alice.png', name: '婴儿连体衣', price: 59, originalPrice: 99, spec: '1-3岁 粉色', sales: 892 },
+  { id: 4, image: '/src/static/alice.png', name: '婴儿安抚玩具', price: 39, originalPrice: 69, spec: '毛绒玩具', sales: 1567 },
+  { id: 5, image: '/src/static/alice.png', name: '贝亲奶瓶', price: 79, originalPrice: 99, spec: '240ml', sales: 987 },
+  { id: 6, image: '/src/static/alice.png', name: '婴儿湿巾', price: 29, originalPrice: 49, spec: '80抽/包', sales: 3456 }
 ]);
 
 // 事件处理
