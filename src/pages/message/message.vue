@@ -1,5 +1,14 @@
 <template>
 	<view class="message-container">
+		<!-- 顶部导航 -->
+		<view class="top-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+			<view class="nav-left" @tap="handleBack">
+				<text class="back-icon">←</text>
+			</view>
+			<text class="nav-title">消息通知</text>
+			<view class="nav-right"></view>
+		</view>
+		
 		<!-- 消息分类标签 -->
 		<view class="message-tabs">
 			<view 
@@ -59,7 +68,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+
+// 状态栏高度
+const statusBarHeight = ref(0);
+
+// 获取状态栏高度
+const getStatusBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = (systemInfo.statusBarHeight || 0) + 50; // 增加50px的padding，约5cm
+};
+
+// 返回按钮事件
+const handleBack = () => {
+  uni.navigateBack();
+};
 
 // 消息分类标签
 const messageTabs = ref([
@@ -207,6 +230,11 @@ const updateTabBadges = () => {
 	messageTabs.value[1].badge = unreadOrderCount > 0 ? unreadOrderCount : 0;
 	messageTabs.value[2].badge = unreadActivityCount > 0 ? unreadActivityCount : 0;
 };
+
+// 生命周期
+onMounted(() => {
+	getStatusBarHeight();
+});
 </script>
 
 <style scoped>
@@ -215,6 +243,44 @@ const updateTabBadges = () => {
 	width: 100%;
 	min-height: 100vh;
 	background-color: #f8f9fa;
+}
+
+/* 顶部导航 */
+.top-nav {
+	min-height: 44px;
+	width: 100%;
+	background-color: #FFB6C1;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0 15px;
+	position: relative;
+	z-index: 1000;
+	box-sizing: border-box;
+}
+
+.nav-left {
+	width: 40px;
+	display: flex;
+	align-items: center;
+}
+
+.back-icon {
+	font-size: 18px;
+	color: white;
+	font-weight: bold;
+}
+
+.nav-title {
+	font-size: 16px;
+	font-weight: bold;
+	color: white;
+	flex: 1;
+	text-align: center;
+}
+
+.nav-right {
+	width: 40px;
 }
 
 /* 消息分类标签 */
