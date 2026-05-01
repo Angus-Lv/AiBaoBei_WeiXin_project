@@ -119,7 +119,7 @@
         {
           "id": 1,
           "category": "milk",
-          "image": "/static/logo.png",
+          "image": "/src/static/logo.png",
           "name": "爱他美白金版奶粉",
           "spec": "800g/罐",
           "price": "199",
@@ -152,9 +152,9 @@
     "data": {
       "id": 1,
       "name": "爱他美白金版奶粉",
-      "image": "/static/logo.png",
-      "images": ["/static/logo.png", "/static/logo.png"],
-      "detailImages": ["/static/logo.png", "/static/logo.png"],
+      "image": "/src/static/logo.png",
+      "images": ["/src/static/logo.png", "/src/static/logo.png"],
+      "detailImages": ["/src/static/logo.png", "/src/static/logo.png"],
       "price": "199",
       "originalPrice": "299",
       "spec": "800g/罐",
@@ -242,7 +242,7 @@
           "totalQuantity": 2,
           "createTime": "2024-01-29 12:00:00",
           "products": [
-            { "id": 1, "name": "爱他美白金版奶粉", "price": "199", "quantity": 1, "image": "/static/logo.png" }
+            { "id": 1, "name": "爱他美白金版奶粉", "price": "199", "quantity": 1, "image": "/src/static/logo.png" }
           ]
         }
       ],
@@ -316,7 +316,7 @@
         {
           "id": 1,
           "productId": 1,
-          "image": "/static/logo.png",
+          "image": "/src/static/logo.png",
           "name": "爱他美白金版奶粉",
           "price": "199",
           "sales": 1258,
