@@ -53,7 +53,7 @@
 		<view class="seckill-section">
 			<view class="section-header">
 				<text class="section-title">今日秒杀</text>
-				<text class="more" @tap="handleMoreSeckill">更多 ></text>
+				<text class="more" @tap="handleMoreSeckill">更多 ›</text>
 			</view>
 			<view class="seckill-list">
 				<view class="seckill-item" v-for="(item, index) in seckillList" :key="index" @tap="handleSeckillItem(item.id)">
@@ -83,7 +83,7 @@
 		<view class="hot-section">
 			<view class="section-header">
 				<text class="section-title">爆款推荐</text>
-				<text class="more" @tap="handleMoreHot">更多 ></text>
+				<text class="more" @tap="handleMoreHot">更多 ›</text>
 			</view>
 			<view class="hot-grid">
 				<view class="hot-item" v-for="(item, index) in hotList" :key="index" @tap="handleHotItem(item.id)">
@@ -104,7 +104,7 @@
 		<view class="service-section">
 			<view class="section-header">
 				<text class="section-title">门店服务</text>
-				<text class="more" @tap="handleMoreService">更多 ></text>
+				<text class="more" @tap="handleMoreService">更多 ›</text>
 			</view>
 			<view class="service-grid">
 				<view class="service-item" v-for="(item, index) in serviceList" :key="index" @tap="handleService(item.id)">

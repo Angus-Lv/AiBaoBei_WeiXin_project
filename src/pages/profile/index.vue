@@ -48,22 +48,22 @@
 				<view class="service-item" @tap="handleService('orders')">
 				<view class="service-icon">📋</view>
 				<text class="service-name">我的订单</text>
-				<view class="service-arrow">></view>
+				<text class="service-arrow">›</text>
 			</view>
 			<view class="service-item" @tap="handleService('favorites')">
 				<view class="service-icon">❤️</view>
 				<text class="service-name">我的收藏</text>
-				<view class="service-arrow">></view>
+				<text class="service-arrow">›</text>
 			</view>
 			<view class="service-item" @tap="handleCheckin">
 				<view class="service-icon">📅</view>
 				<text class="service-name">每日签到</text>
-				<view class="service-arrow">></view>
+				<text class="service-arrow">›</text>
 			</view>
 			<view class="service-item" @tap="handleMessage">
 				<view class="service-icon">💬</view>
 				<text class="service-name">消息通知</text>
-				<view class="service-arrow">></view>
+				<text class="service-arrow">›</text>
 			</view>
 			</view>
 		</view>
