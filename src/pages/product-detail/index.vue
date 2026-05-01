@@ -127,7 +127,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 const product = ref({
   id: 0,
   name: '',
-  image: '/src/static/alice.png',
+  image: '/static/alice.png',
   images: [],
   detailImages: [],
   price: '',
@@ -142,10 +142,26 @@ const product = ref({
 // 状态栏高度
 const statusBarHeight = ref(0);
 
+// 获取导航栏高度（兼容小程序和H5）
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
+  let navBarHeight = 0;
+
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44;
+  } else {
+    navBarHeight = 44;
+  }
+
+  return Math.round(navBarHeight);
+};
+
 // 计算状态栏高度
 const getStatusBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  statusBarHeight.value = (systemInfo.statusBarHeight || 0) + 50; // 增加50px的padding，约5cm
+  statusBarHeight.value = getNavBarHeight();
 };
 
 
@@ -199,9 +215,9 @@ const getProductDetail = (id, isSeckill) => {
     1: {
       id: 1,
       name: '爱他美白金版奶粉',
-      image: '/src/static/alice.png',
-      images: ['/src/static/alice.png', '/src/static/alice.png', '/src/static/alice.png'],
-      detailImages: ['/src/static/alice.png', '/src/static/alice.png'],
+      image: '/static/alice.png',
+      images: ['/static/alice.png', '/static/alice.png', '/static/alice.png'],
+      detailImages: ['/static/alice.png', '/static/alice.png'],
       price: '199',
       originalPrice: '299',
       spec: '800g/罐',
@@ -217,9 +233,9 @@ const getProductDetail = (id, isSeckill) => {
     2: {
       id: 2,
       name: '花王纸尿裤',
-      image: '/src/static/alice.png',
-      images: ['/src/static/alice.png', '/src/static/alice.png'],
-      detailImages: ['/src/static/alice.png'],
+      image: '/static/alice.png',
+      images: ['/static/alice.png', '/static/alice.png'],
+      detailImages: ['/static/alice.png'],
       price: '89',
       originalPrice: '129',
       spec: 'M码 64片/包',
@@ -234,8 +250,8 @@ const getProductDetail = (id, isSeckill) => {
     3: {
       id: 3,
       name: '婴儿连体衣',
-      image: '/src/static/alice.png',
-      images: ['/src/static/alice.png'],
+      image: '/static/alice.png',
+      images: ['/static/alice.png'],
       detailImages: [],
       price: '59',
       originalPrice: '99',
@@ -248,9 +264,9 @@ const getProductDetail = (id, isSeckill) => {
     4: {
       id: 4,
       name: '婴儿安抚玩具',
-      image: '/src/static/alice.png',
-      images: ['/src/static/alice.png', '/src/static/alice.png', '/src/static/alice.png'],
-      detailImages: ['/src/static/alice.png', '/src/static/alice.png', '/src/static/alice.png'],
+      image: '/static/alice.png',
+      images: ['/static/alice.png', '/static/alice.png', '/static/alice.png'],
+      detailImages: ['/static/alice.png', '/static/alice.png', '/static/alice.png'],
       price: '39',
       originalPrice: '69',
       spec: '毛绒玩具',
@@ -262,9 +278,9 @@ const getProductDetail = (id, isSeckill) => {
     5: {
       id: 5,
       name: '贝亲奶瓶',
-      image: '/src/static/alice.png',
-      images: ['/src/static/alice.png', '/src/static/alice.png'],
-      detailImages: ['/src/static/alice.png'],
+      image: '/static/alice.png',
+      images: ['/static/alice.png', '/static/alice.png'],
+      detailImages: ['/static/alice.png'],
       price: '79',
       originalPrice: '99',
       spec: '240ml',
@@ -276,8 +292,8 @@ const getProductDetail = (id, isSeckill) => {
     6: {
       id: 6,
       name: '婴儿湿巾',
-      image: '/src/static/alice.png',
-      images: ['/src/static/alice.png'],
+      image: '/static/alice.png',
+      images: ['/static/alice.png'],
       detailImages: [],
       price: '29',
       originalPrice: '49',
@@ -293,8 +309,8 @@ const getProductDetail = (id, isSeckill) => {
   const productItem = productData[id] || {
     id: id,
     name: '商品名称',
-    image: '/src/static/alice.png',
-    images: ['/src/static/alice.png'],
+    image: '/static/alice.png',
+    images: ['/static/alice.png'],
     detailImages: [],
     price: '0',
     originalPrice: '',

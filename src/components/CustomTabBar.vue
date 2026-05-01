@@ -42,22 +42,22 @@ const defaultItems = ref([
   {
     path: '/pages/index/index',
     text: '首页',
-    icon: '/src/static/tabbar/home.png',
-    selectedIcon: '/src/static/tabbar/home-active.png',
+    icon: '/static/tabbar/home.png',
+    selectedIcon: '/static/tabbar/home-active.png',
     badge: 0
   },
   {
     path: '/pages/products/index',
     text: '商品',
-    icon: '/src/static/tabbar/products.png',
-    selectedIcon: '/src/static/tabbar/products-active.png',
+    icon: '/static/tabbar/products.png',
+    selectedIcon: '/static/tabbar/products-active.png',
     badge: 0
   },
   {
     path: '/pages/profile/index',
     text: '我的',
-    icon: '/src/static/tabbar/profile.png',
-    selectedIcon: '/src/static/tabbar/profile-active.png',
+    icon: '/static/tabbar/profile.png',
+    selectedIcon: '/static/tabbar/profile-active.png',
     badge: 0
   }
 ]);

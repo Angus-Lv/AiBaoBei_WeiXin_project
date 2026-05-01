@@ -100,25 +100,33 @@ import { onShow } from '@dcloudio/uni-app';
 const searchKeyword = ref('');
 const currentCategory = ref('all');
 const currentFilter = ref('all');
-
-// 状态栏高度
 const statusBarHeight = ref(0);
 
-// 计算状态栏高度
-const getStatusBarHeight = () => {
+// 获取导航栏高度（兼容小程序和H5）
+const getNavBarHeight = () => {
   const systemInfo = uni.getSystemInfoSync();
-  statusBarHeight.value = (systemInfo.statusBarHeight || 0) + 50; // 增加50px的padding，约5cm
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
+  let navBarHeight = 0;
+
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44;
+  } else {
+    navBarHeight = 44;
+  }
+
+  return Math.round(navBarHeight);
 };
 
 // 生命周期
 onMounted(() => {
-  getStatusBarHeight();
+  statusBarHeight.value = getNavBarHeight();
   // 首次加载时处理
   handleCategoryFromStorage();
 });
 
 onShow(() => {
-  getStatusBarHeight();
   // 每次页面显示时处理，包括switchTab跳转后
   handleCategoryFromStorage();
 });
@@ -269,19 +277,19 @@ const filterConfig = {
 
 // 商品数据
 const productList = ref([
-	{ id: 1, category: 'milk', image: '/src/static/logo.png', name: '爱他美白金版奶粉', spec: '800g/罐', price: '199', originalPrice: '299', sales: 1258, stock: 200, filter: '1', isSeckill: true },
-	{ id: 2, category: 'milk', image: '/src/static/logo.png', name: '美赞臣蓝臻奶粉', spec: '900g/罐', price: '259', sales: 986, stock: 150, filter: '2', isSeckill: false },
-	{ id: 3, category: 'milk', image: '/src/static/logo.png', name: '惠氏启赋奶粉', spec: '800g/罐', price: '299', sales: 756, stock: 120, filter: '3', isSeckill: false },
-	{ id: 4, category: 'diaper', image: '/src/static/logo.png', name: '花王纸尿裤', spec: 'M码 64片/包', price: '89', originalPrice: '129', sales: 2341, stock: 350, filter: 'm', isSeckill: true },
-	{ id: 5, category: 'diaper', image: '/src/static/logo.png', name: '大王纸尿裤', spec: 'L码 54片/包', price: '79', sales: 1892, stock: 280, filter: 'l', isSeckill: false },
-	{ id: 6, category: 'clothes', image: '/src/static/logo.png', name: '婴儿连体衣', spec: '1-3岁 粉色', price: '59', originalPrice: '99', sales: 892, stock: 150, filter: '1-3', isSeckill: true },
-	{ id: 7, category: 'clothes', image: '/src/static/logo.png', name: '儿童T恤', spec: '3-6岁 蓝色', price: '45', sales: 654, stock: 200, filter: '3-6', isSeckill: false },
-	{ id: 8, category: 'toys', image: '/src/static/logo.png', name: '婴儿安抚玩具', spec: '毛绒玩具', price: '39', originalPrice: '69', sales: 1567, stock: 300, filter: 'plush', isSeckill: true },
-	{ id: 9, category: 'toys', image: '/src/static/logo.png', name: '积木玩具', spec: '益智玩具', price: '89', sales: 432, stock: 180, filter: 'educational', isSeckill: false },
-	{ id: 10, category: 'feeding', image: '/src/static/logo.png', name: '贝亲奶瓶', spec: '160ml 宽口', price: '79', sales: 1123, stock: 250, filter: 'bottle', isSeckill: false },
-	{ id: 11, category: 'feeding', image: '/src/static/logo.png', name: 'NUK奶嘴', spec: '0-6个月', price: '25', sales: 876, stock: 400, filter: 'nipple', isSeckill: false },
-	{ id: 12, category: 'care', image: '/src/static/logo.png', name: '婴儿洗衣液', spec: '1L/瓶', price: '49', sales: 2345, stock: 320, filter: 'skin', isSeckill: false },
-	{ id: 13, category: 'care', image: '/src/static/logo.png', name: '婴儿沐浴露', spec: '500ml/瓶', price: '35', sales: 1876, stock: 280, filter: 'bath', isSeckill: false }
+	{ id: 1, category: 'milk', image: '/static/logo.png', name: '爱他美白金版奶粉', spec: '800g/罐', price: '199', originalPrice: '299', sales: 1258, stock: 200, filter: '1', isSeckill: true },
+	{ id: 2, category: 'milk', image: '/static/logo.png', name: '美赞臣蓝臻奶粉', spec: '900g/罐', price: '259', sales: 986, stock: 150, filter: '2', isSeckill: false },
+	{ id: 3, category: 'milk', image: '/static/logo.png', name: '惠氏启赋奶粉', spec: '800g/罐', price: '299', sales: 756, stock: 120, filter: '3', isSeckill: false },
+	{ id: 4, category: 'diaper', image: '/static/logo.png', name: '花王纸尿裤', spec: 'M码 64片/包', price: '89', originalPrice: '129', sales: 2341, stock: 350, filter: 'm', isSeckill: true },
+	{ id: 5, category: 'diaper', image: '/static/logo.png', name: '大王纸尿裤', spec: 'L码 54片/包', price: '79', sales: 1892, stock: 280, filter: 'l', isSeckill: false },
+	{ id: 6, category: 'clothes', image: '/static/logo.png', name: '婴儿连体衣', spec: '1-3岁 粉色', price: '59', originalPrice: '99', sales: 892, stock: 150, filter: '1-3', isSeckill: true },
+	{ id: 7, category: 'clothes', image: '/static/logo.png', name: '儿童T恤', spec: '3-6岁 蓝色', price: '45', sales: 654, stock: 200, filter: '3-6', isSeckill: false },
+	{ id: 8, category: 'toys', image: '/static/logo.png', name: '婴儿安抚玩具', spec: '毛绒玩具', price: '39', originalPrice: '69', sales: 1567, stock: 300, filter: 'plush', isSeckill: true },
+	{ id: 9, category: 'toys', image: '/static/logo.png', name: '积木玩具', spec: '益智玩具', price: '89', sales: 432, stock: 180, filter: 'educational', isSeckill: false },
+	{ id: 10, category: 'feeding', image: '/static/logo.png', name: '贝亲奶瓶', spec: '160ml 宽口', price: '79', sales: 1123, stock: 250, filter: 'bottle', isSeckill: false },
+	{ id: 11, category: 'feeding', image: '/static/logo.png', name: 'NUK奶嘴', spec: '0-6个月', price: '25', sales: 876, stock: 400, filter: 'nipple', isSeckill: false },
+	{ id: 12, category: 'care', image: '/static/logo.png', name: '婴儿洗衣液', spec: '1L/瓶', price: '49', sales: 2345, stock: 320, filter: 'skin', isSeckill: false },
+	{ id: 13, category: 'care', image: '/static/logo.png', name: '婴儿沐浴露', spec: '500ml/瓶', price: '35', sales: 1876, stock: 280, filter: 'bath', isSeckill: false }
 ]);
 
 // 计算属性：当前筛选标题
@@ -379,17 +387,16 @@ const handleProductClick = (product) => {
 
 /* 顶部导航栏 */
 .nav-bar {
-  height: 94px;
+  min-height: 44px;
   background-color: #FFB6C1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 15px;
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .nav-left {
@@ -417,10 +424,6 @@ const handleProductClick = (product) => {
   background-color: white;
   padding: 8px 12px;
   border-bottom: 1px solid #f0f0f0;
-  margin-top: 94px;
-  position: sticky;
-  top: 94px;
-  z-index: 99;
 }
 
 .search-box {

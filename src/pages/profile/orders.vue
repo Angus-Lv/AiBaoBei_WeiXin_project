@@ -148,10 +148,26 @@ const selectedTab = ref('all');
 // 状态栏高度
 const statusBarHeight = ref(0);
 
+// 获取导航栏高度（兼容小程序和H5）
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
+  let navBarHeight = 0;
+
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44;
+  } else {
+    navBarHeight = 44;
+  }
+
+  return Math.round(navBarHeight);
+};
+
 // 计算状态栏高度
 const getStatusBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  statusBarHeight.value = (systemInfo.statusBarHeight || 0) + 50; // 增加50px的padding，约5cm
+  statusBarHeight.value = getNavBarHeight();
 };
 
 // 生命周期
@@ -175,8 +191,8 @@ const allOrders = ref([
     totalPrice: '288',
     totalQuantity: 2,
     products: [
-      { id: 1, name: '爱他美白金版奶粉', price: '199', quantity: 1, image: '/src/static/alice.png' },
-      { id: 2, name: '花王纸尿裤', price: '89', quantity: 1, image: '/src/static/alice.png' }
+      { id: 1, name: '爱他美白金版奶粉', price: '199', quantity: 1, image: '/static/alice.png' },
+      { id: 2, name: '花王纸尿裤', price: '89', quantity: 1, image: '/static/alice.png' }
     ]
   },
   {
@@ -186,7 +202,7 @@ const allOrders = ref([
     totalPrice: '59',
     totalQuantity: 1,
     products: [
-      { id: 3, name: '婴儿连体衣', price: '59', quantity: 1, image: '/src/static/alice.png' }
+      { id: 3, name: '婴儿连体衣', price: '59', quantity: 1, image: '/static/alice.png' }
     ]
   }
 ]);

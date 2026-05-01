@@ -144,25 +144,41 @@ const searchKeyword = ref('');
 const searchFocus = ref(false);
 const statusBarHeight = ref(0);
 
+// 获取导航栏高度（兼容小程序和H5）
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
+  let navBarHeight = 0;
+
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44;
+  } else {
+    navBarHeight = 44;
+  }
+
+  return Math.round(navBarHeight);
+};
+
 // 计算状态栏高度
 const getStatusBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  statusBarHeight.value = (systemInfo.statusBarHeight || 0) + 50; // 增加50px的padding，约5cm
+  statusBarHeight.value = getNavBarHeight();
 };
 
 // 轮播图数据
 const swiperList = ref([
-    { id: 1, image: '/src/static/alice.png', title: '爱宝贝儿孕婴生活馆' },
-    { id: 2, image: '/src/static/alice.png', title: '新品上市' },
-    { id: 3, image: '/src/static/alice.png', title: '会员专享优惠' }
+    { id: 1, image: '/static/alice.png', title: '爱宝贝儿孕婴生活馆' },
+    { id: 2, image: '/static/alice.png', title: '新品上市' },
+    { id: 3, image: '/static/alice.png', title: '会员专享优惠' }
 ]);
 
 // 模拟数据
 const seckillList = ref([
-    { id: 1, image: '/src/static/alice.png', name: '爱他美白金版奶粉', currentPrice: '199', originalPrice: '299' },
-    { id: 2, image: '/src/static/alice.png', name: '花王纸尿裤', currentPrice: '89', originalPrice: '129' },
-    { id: 3, image: '/src/static/alice.png', name: '婴儿连体衣', currentPrice: '59', originalPrice: '99' },
-    { id: 4, image: '/src/static/alice.png', name: '婴儿安抚玩具', currentPrice: '39', originalPrice: '69' }
+    { id: 1, image: '/static/alice.png', name: '爱他美白金版奶粉', currentPrice: '199', originalPrice: '299' },
+    { id: 2, image: '/static/alice.png', name: '花王纸尿裤', currentPrice: '89', originalPrice: '129' },
+    { id: 3, image: '/static/alice.png', name: '婴儿连体衣', currentPrice: '59', originalPrice: '99' },
+    { id: 4, image: '/static/alice.png', name: '婴儿安抚玩具', currentPrice: '39', originalPrice: '69' }
 ]);
 
 const categoryList = ref([
@@ -177,10 +193,10 @@ const categoryList = ref([
 ]);
 
 const hotList = ref([
-	{ id: 1, image: '/src/static/alice.png', name: '爱他美白金版奶粉', price: '199', sales: 1258 },
-	{ id: 2, image: '/src/static/alice.png', name: '花王纸尿裤', price: '89', sales: 2341 },
-	{ id: 3, image: '/src/static/alice.png', name: '婴儿连体衣', price: '59', sales: 892 },
-	{ id: 4, image: '/src/static/alice.png', name: '婴儿安抚玩具', price: '39', sales: 1567 }
+	{ id: 1, image: '/static/alice.png', name: '爱他美白金版奶粉', price: '199', sales: 1258 },
+	{ id: 2, image: '/static/alice.png', name: '花王纸尿裤', price: '89', sales: 2341 },
+	{ id: 3, image: '/static/alice.png', name: '婴儿连体衣', price: '59', sales: 892 },
+	{ id: 4, image: '/static/alice.png', name: '婴儿安抚玩具', price: '39', sales: 1567 }
 ]);
 
 const serviceList = ref([

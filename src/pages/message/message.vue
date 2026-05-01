@@ -73,10 +73,26 @@ import { ref, computed, onMounted } from 'vue';
 // 状态栏高度
 const statusBarHeight = ref(0);
 
+// 获取导航栏高度（兼容小程序和H5）
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
+  let navBarHeight = 0;
+
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44;
+  } else {
+    navBarHeight = 44;
+  }
+
+  return Math.round(navBarHeight);
+};
+
 // 获取状态栏高度
 const getStatusBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  statusBarHeight.value = (systemInfo.statusBarHeight || 0) + 50; // 增加50px的padding，约5cm
+  statusBarHeight.value = getNavBarHeight();
 };
 
 // 返回按钮事件
