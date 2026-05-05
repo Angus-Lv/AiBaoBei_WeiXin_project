@@ -1,20 +1,12 @@
 <template>
 	<view class="register-container">
-		<!-- 状态栏 -->
-		<view class="status-bar">
-			<text class="status-time">{{ currentTime }}</text>
-			<text class="status-icons">信号 电池</text>
-		</view>
-		
-		<!-- 标题区域 -->
 		<view class="register-header">
 			<view class="logo">❤️</view>
 			<h1 class="register-title">爱宝贝儿</h1>
 			<p class="register-subtitle">欢迎加入，一起开启美好时光</p>
 		</view>
 		
-		<!-- 注册表单 -->
-		<form class="register-form" @submit.prevent="handleRegister">
+		<view class="register-form">
 			<view class="form-group">
 				<text class="form-label">账号</text>
 				<input 
@@ -22,7 +14,6 @@
 					v-model="formData.username" 
 					placeholder="请设置账号" 
 					class="form-input" 
-					required
 				/>
 			</view>
 			
@@ -34,7 +25,6 @@
 						v-model="formData.password" 
 						placeholder="请设置密码" 
 						class="form-input" 
-						required
 					/>
 					<text class="password-toggle" @tap="togglePassword">
 						{{ showPassword ? '隐藏' : '显示' }}
@@ -50,7 +40,6 @@
 						v-model="formData.confirmPassword" 
 						placeholder="请确认密码" 
 						class="form-input" 
-						required
 					/>
 					<text class="password-toggle" @tap="toggleConfirmPassword">
 						{{ showConfirmPassword ? '隐藏' : '显示' }}
@@ -58,10 +47,11 @@
 				</view>
 			</view>
 			
-			<button type="submit" class="register-btn">注册</button>
-		</form>
+			<button class="register-btn" @tap="handleRegister" :disabled="loading">
+				{{ loading ? '注册中...' : '注册' }}
+			</button>
+		</view>
 		
-		<!-- 底部链接 -->
 		<view class="register-footer">
 			<text>已有账号？</text>
 			<text class="login-link" @tap="navigateToLogin">立即登录</text>
@@ -71,122 +61,83 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { authApi } from '../../api/auth';
 
-// 表单数据
-const formData = ref({
-	username: '',
-	password: '',
-	confirmPassword: ''
-});
-
-// 密码显示状态
+const formData = ref({ username: '', password: '', confirmPassword: '' });
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+const loading = ref(false);
 
-// 当前时间
-const currentTime = ref('');
-
-// 切换密码显示状态
-const togglePassword = () => {
-	showPassword.value = !showPassword.value;
+const togglePassword = () => { 
+  showPassword.value = !showPassword.value;
 };
 
-// 切换确认密码显示状态
-const toggleConfirmPassword = () => {
-	showConfirmPassword.value = !showConfirmPassword.value;
+const toggleConfirmPassword = () => { 
+  showConfirmPassword.value = !showConfirmPassword.value;
 };
 
-// 处理注册
-const handleRegister = () => {
-	if (!formData.value.username) {
-		uni.showToast({
-			title: '请设置账号',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	if (!formData.value.password) {
-		uni.showToast({
-			title: '请设置密码',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	if (formData.value.password !== formData.value.confirmPassword) {
-		uni.showToast({
-			title: '两次输入的密码不一致',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	uni.showToast({
-		title: '注册成功！欢迎加入爱宝贝儿',
-		icon: 'success'
-	});
-	
-	// 注册成功后跳转到登录页面
-	setTimeout(() => {
-		uni.navigateTo({
-			url: '/pages/login/login'
-		});
-	}, 1500);
+const handleRegister = async () => {
+  if (!formData.value.username.trim()) {
+    uni.showToast({ title: '请设置账号', icon: 'none', duration: 2000 });
+    return;
+  }
+  if (!formData.value.password.trim()) {
+    uni.showToast({ title: '请设置密码', icon: 'none', duration: 2000 });
+    return;
+  }
+  if (formData.value.password !== formData.value.confirmPassword) {
+    uni.showToast({ title: '两次输入的密码不一致', icon: 'none', duration: 2000 });
+    return;
+  }
+  
+  if (loading.value) return;
+  
+  try {
+    loading.value = true;
+    console.log('正在发送注册请求...', {
+      username: formData.value.username.trim(),
+      password: formData.value.password.trim()
+    });
+    
+    const res = await authApi.register({
+      username: formData.value.username.trim(),
+      password: formData.value.password.trim()
+    });
+    
+    console.log('注册响应:', res);
+    
+    uni.showToast({ title: '注册成功！欢迎加入爱宝贝儿', icon: 'success', duration: 1500 });
+    setTimeout(() => { 
+      uni.navigateTo({ url: '/pages/login/login' });
+    }, 1500);
+  } catch (e) {
+    console.error('注册失败:', e);
+    const errorMsg = e.message || e.msg || '注册失败，请检查网络';
+    uni.showToast({ title: errorMsg, icon: 'none', duration: 2000 });
+  } finally {
+    loading.value = false;
+  }
 };
 
-// 跳转到登录页面
 const navigateToLogin = () => {
-	uni.navigateTo({
-		url: '/pages/login/login'
-	});
+  uni.navigateTo({ url: '/pages/login/login' });
 };
 
-// 更新当前时间
-const updateCurrentTime = () => {
-	const now = new Date();
-	const hours = now.getHours().toString().padStart(2, '0');
-	const minutes = now.getMinutes().toString().padStart(2, '0');
-	currentTime.value = `${hours}:${minutes}`;
-};
-
-// 生命周期钩子
 onMounted(() => {
-	updateCurrentTime();
-	// 每分钟更新一次时间
-	setInterval(updateCurrentTime, 60000);
+  console.log('注册页面加载完成');
 });
 </script>
 
 <style scoped>
-/* 全局样式重置 */
 .register-container {
 	width: 100%;
 	min-height: 100vh;
 	background: linear-gradient(135deg, #FFFAF0 0%, #FFF0F5 100%);
-	padding: 0 20rpx;
+	padding: 0 40rpx;
 	display: flex;
 	flex-direction: column;
 }
 
-/* 状态栏 */
-.status-bar {
-	height: 88rpx;
-	width: 100%;
-	position: fixed;
-	top: 0;
-	left: 0;
-	background-color: #FFB6C1;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 0 20rpx;
-	color: white;
-	font-size: 28rpx;
-	z-index: 100;
-}
-
-/* 标题区域 */
 .register-header {
 	text-align: center;
 	margin-top: 160rpx;
@@ -219,7 +170,6 @@ onMounted(() => {
 	color: #757575;
 }
 
-/* 表单区域 */
 .register-form {
 	width: 100%;
 	display: flex;
@@ -251,6 +201,7 @@ onMounted(() => {
 	transition: all 0.3s ease;
 	background-color: white;
 	box-shadow: inset 0 4rpx 8rpx rgba(0,0,0,0.05);
+	box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -270,10 +221,8 @@ onMounted(() => {
 	transform: translateY(-50%);
 	color: #757575;
 	font-size: 28rpx;
-	tap-highlight-color: transparent;
 }
 
-/* 注册按钮 */
 .register-btn {
 	width: 100%;
 	height: 100rpx;
@@ -294,7 +243,10 @@ onMounted(() => {
 	box-shadow: 0 4rpx 12rpx rgba(255,105,180,0.3);
 }
 
-/* 底部链接 */
+.register-btn:disabled {
+	opacity: 0.7;
+}
+
 .register-footer {
 	margin-top: 60rpx;
 	text-align: center;
@@ -307,7 +259,6 @@ onMounted(() => {
 	color: #FF69B4;
 	text-decoration: none;
 	font-weight: 500;
-	tap-highlight-color: transparent;
 	margin-left: 8rpx;
 }
 

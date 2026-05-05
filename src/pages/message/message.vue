@@ -68,189 +68,128 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue'
+import { messagesApi } from '../../api/messages'
 
-// 状态栏高度
-const statusBarHeight = ref(0);
-
-// 获取导航栏高度（兼容小程序和H5）
-const getNavBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
-  let navBarHeight = 0;
-
-  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
-  } else if (systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = systemInfo.statusBarHeight + 44;
-  } else {
-    navBarHeight = 44;
-  }
-
-  return Math.round(navBarHeight);
-};
-
-// 获取状态栏高度
-const getStatusBarHeight = () => {
-  statusBarHeight.value = getNavBarHeight();
-};
-
-// 返回按钮事件
-const handleBack = () => {
-  uni.navigateBack();
-};
-
-// 消息分类标签
+const statusBarHeight = ref(0)
+const pageLoading = ref(true)
+const activeTab = ref('all')
+const messages = ref([])
 const messageTabs = ref([
-	{ id: 'all', name: '全部', badge: 3 },
-	{ id: 'order', name: '订单通知', badge: 1 },
-	{ id: 'activity', name: '活动通知', badge: 2 }
-]);
+  { id: 'all', name: '全部', badge: 0 },
+  { id: 'order', name: '订单通知', badge: 0 },
+  { id: 'activity', name: '活动通知', badge: 0 }
+])
 
-// 活跃标签
-const activeTab = ref('all');
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync()
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  let navBarHeight = 0
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44
+  } else {
+    navBarHeight = 44
+  }
+  return Math.round(navBarHeight)
+}
 
-// 消息数据
-const messages = ref([
-	{
-		id: 1,
-		title: '订单未支付提醒',
-		content: '您有一笔订单尚未支付，请尽快完成支付，以免影响订单处理。',
-		time: '10:30',
-		icon: '📋',
-		type: 'order',
-		isRead: false,
-		url: '/pages/profile/index'
-	},
-	{
-		id: 2,
-		title: '新品上市',
-		content: '爱他美白金版奶粉新品上市，限时8折优惠，快来看看吧！',
-		time: '09:15',
-		icon: '🎉',
-		type: 'activity',
-		isRead: false,
-		url: '/pages/products/index'
-	},
-	{
-		id: 3,
-		title: '会员专享福利',
-		content: '亲爱的会员，本月专享福利已更新，点击查看详情。',
-		time: '昨天',
-		icon: '👑',
-		type: 'activity',
-		isRead: false,
-		url: '/pages/member/exchange/exchange'
-	},
-	{
-		id: 4,
-		title: '订单已发货',
-		content: '您的订单已发货，预计3天内送达，请保持电话畅通。',
-		time: '2026-01-28',
-		icon: '📦',
-		type: 'order',
-		isRead: true,
-		url: '/pages/profile/index'
-	},
-	{
-		id: 5,
-		title: '限时秒杀',
-		content: '今日秒杀活动开始啦，爆款商品低至5折，错过再等一年！',
-		time: '2026-01-27',
-		icon: '⏰',
-		type: 'activity',
-		isRead: true,
-		url: '/pages/index/index'
-	}
-]);
+const loadMessages = async () => {
+  try {
+    pageLoading.value = true
+    const res = await messagesApi.getList({ page: 1, pageSize: 50 })
+    if (res && res.data) {
+      const list = res.data.records || res.data.list || res.data || []
+      messages.value = list.map(item => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        time: item.createTime || item.time,
+        icon: item.icon || '📋',
+        type: item.type || 'order',
+        isRead: item.isRead || false,
+        url: item.url || ''
+      }))
+      updateTabBadges()
+    }
+  } catch (e) {
+    console.error('消息加载失败:', e)
+  } finally {
+    pageLoading.value = false
+  }
+}
 
-// 过滤消息
+const handleBack = () => { uni.navigateBack() }
+
 const filteredMessages = computed(() => {
-	if (activeTab.value === 'all') {
-		return messages.value;
-	}
-	return messages.value.filter(msg => msg.type === activeTab.value);
-});
+  if (activeTab.value === 'all') return messages.value
+  return messages.value.filter(msg => msg.type === activeTab.value)
+})
 
-// 切换标签
-const switchTab = (tabId) => {
-	activeTab.value = tabId;
-};
+const switchTab = (tabId) => { activeTab.value = tabId }
 
-// 处理消息点击
-const handleMessageTap = (message) => {
-	// 标记为已读
-	if (!message.isRead) {
-		message.isRead = true;
-		// 更新标签徽章
-		updateTabBadges();
-	}
-	
-	// 跳转到对应页面
-	if (message.url) {
-		uni.navigateTo({
-			url: message.url
-		});
-	}
-};
+const handleMessageTap = async (message) => {
+  if (!message.isRead) {
+    try {
+      await messagesApi.markRead(message.id)
+    } catch (e) {}
+    message.isRead = true
+    updateTabBadges()
+  }
+  if (message.url) {
+    const pages = getCurrentPages()
+    const isTabPage = ['pages/index/index', 'pages/products/index', 'pages/profile/index'].some(
+      p => message.url.includes(p)
+    )
+    if (isTabPage) {
+      uni.switchTab({ url: message.url })
+    } else {
+      uni.navigateTo({ url: message.url })
+    }
+  }
+}
 
-// 标记为已读
-const markAsRead = (message) => {
-	message.isRead = true;
-	// 更新标签徽章
-	updateTabBadges();
-	
-	uni.showToast({
-		title: '已标记为已读',
-		icon: 'success',
-		duration: 1500
-	});
-};
+const markAsRead = async (message) => {
+  message.isRead = true
+  try { await messagesApi.markRead(message.id) } catch (e) {}
+  updateTabBadges()
+  uni.showToast({ title: '已标记为已读', icon: 'success', duration: 1500 })
+}
 
-// 删除消息
 const deleteMessage = (messageId) => {
-	uni.showModal({
-		title: '确认删除',
-		content: '确定要删除这条消息吗？',
-		confirmText: '删除',
-		cancelText: '取消',
-		success: (res) => {
-			if (res.confirm) {
-				// 从消息列表中删除
-				const index = messages.value.findIndex(msg => msg.id === messageId);
-				if (index !== -1) {
-					messages.value.splice(index, 1);
-					// 更新标签徽章
-					updateTabBadges();
-					
-					uni.showToast({
-						title: '消息已删除',
-						icon: 'success',
-						duration: 1500
-					});
-				}
-			}
-		}
-	});
-};
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这条消息吗？',
+    confirmText: '删除',
+    cancelText: '取消',
+    success: async (res) => {
+      if (res.confirm) {
+        const index = messages.value.findIndex(msg => msg.id === messageId)
+        if (index !== -1) {
+          try { await messagesApi.remove(messageId) } catch (e) {}
+          messages.value.splice(index, 1)
+          updateTabBadges()
+          uni.showToast({ title: '消息已删除', icon: 'success', duration: 1500 })
+        }
+      }
+    }
+  })
+}
 
-// 更新标签徽章
 const updateTabBadges = () => {
-	// 计算未读消息数量
-	const unreadCount = messages.value.filter(msg => !msg.isRead).length;
-	const unreadOrderCount = messages.value.filter(msg => !msg.isRead && msg.type === 'order').length;
-	const unreadActivityCount = messages.value.filter(msg => !msg.isRead && msg.type === 'activity').length;
-	
-	// 更新标签徽章
-	messageTabs.value[0].badge = unreadCount > 0 ? unreadCount : 0;
-	messageTabs.value[1].badge = unreadOrderCount > 0 ? unreadOrderCount : 0;
-	messageTabs.value[2].badge = unreadActivityCount > 0 ? unreadActivityCount : 0;
-};
+  const unreadCount = messages.value.filter(msg => !msg.isRead).length
+  const unreadOrderCount = messages.value.filter(msg => !msg.isRead && msg.type === 'order').length
+  const unreadActivityCount = messages.value.filter(msg => !msg.isRead && msg.type === 'activity').length
+  messageTabs.value[0].badge = unreadCount
+  messageTabs.value[1].badge = unreadOrderCount
+  messageTabs.value[2].badge = unreadActivityCount
+}
 
-// 生命周期
 onMounted(() => {
-	getStatusBarHeight();
-});
+  statusBarHeight.value = getNavBarHeight()
+  loadMessages()
+})
 </script>
 
 <style scoped>

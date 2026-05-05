@@ -42,97 +42,85 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue'
+import { favoritesApi } from '../../api/favorites'
 
-// 响应式数据
-const favoritesList = ref([
-  { id: 1, image: '/static/logo.png', name: '爱他美白金版奶粉', price: '199', sales: 1258 },
-  { id: 2, image: '/static/logo.png', name: '花王纸尿裤', price: '89', sales: 2341 },
-  { id: 4, image: '/static/logo.png', name: '婴儿安抚玩具', price: '39', sales: 1567 }
-]);
+const favoritesList = ref([])
+const statusBarHeight = ref(0)
+const pageLoading = ref(true)
 
-// 状态栏高度
-const statusBarHeight = ref(0);
-
-// 获取导航栏高度（兼容小程序和H5）
 const getNavBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
-  let navBarHeight = 0;
-
+  const systemInfo = uni.getSystemInfoSync()
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  let navBarHeight = 0
   if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight
   } else if (systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = systemInfo.statusBarHeight + 44;
+    navBarHeight = systemInfo.statusBarHeight + 44
   } else {
-    navBarHeight = 44;
+    navBarHeight = 44
   }
+  return Math.round(navBarHeight)
+}
 
-  return Math.round(navBarHeight);
-};
+const loadFavorites = async () => {
+  try {
+    pageLoading.value = true
+    const res = await favoritesApi.getList({ page: 1, pageSize: 50 })
+    if (res && res.data) {
+      const list = res.data.records || res.data.list || res.data || []
+      favoritesList.value = list.map(item => ({
+        id: item.productId || item.id,
+        image: item.image || item.productImage || '/static/logo.png',
+        name: item.name || item.productName,
+        price: item.price,
+        sales: item.sales || 0
+      }))
+    }
+  } catch (e) {
+    console.error('收藏加载失败:', e)
+    const favs = uni.getStorageSync('favorites') || []
+    favoritesList.value = favs.map(id => ({ id: Number(id), image: '/static/logo.png', name: '商品', price: '0', sales: 0 }))
+  } finally {
+    pageLoading.value = false
+  }
+}
 
-// 计算状态栏高度
-const getStatusBarHeight = () => {
-  statusBarHeight.value = getNavBarHeight();
-};
+const checkLoginStatus = () => true
 
-// 检查登录状态（已关闭）
-const checkLoginStatus = () => {
-  return true;
-};
-
-// 事件处理
-const handleBack = () => {
-  uni.navigateBack();
-};
+const handleBack = () => { uni.navigateBack() }
 
 const handleFavoritesItem = (id) => {
-  console.log('查看商品:', id);
-  // 跳转到商品详情页
-  uni.navigateTo({
-    url: `/pages/product-detail/index?id=${id}`
-  });
-};
+  uni.navigateTo({ url: `/pages/product-detail/index?id=${id}` })
+}
 
-const handleRemoveFavorites = (index) => {
-  if (!checkLoginStatus()) return;
-  console.log('取消收藏:', index);
-  // 显示确认对话框
+const handleRemoveFavorites = async (index) => {
+  if (!checkLoginStatus()) return
+  const item = favoritesList.value[index]
   uni.showModal({
     title: '取消收藏',
     content: '确定要取消收藏这个商品吗？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        // 移除收藏
-        favoritesList.value.splice(index, 1);
-        // 显示成功提示
-        uni.showToast({
-          title: '已取消收藏',
-          icon: 'success',
-          duration: 2000
-        });
+        try {
+          await favoritesApi.remove(item.id)
+        } catch (e) {}
+        favoritesList.value.splice(index, 1)
+        uni.showToast({ title: '已取消收藏', icon: 'success', duration: 2000 })
       }
     }
-  });
-};
+  })
+}
 
 const handleGoShopping = () => {
-  console.log('去逛逛');
-  // 跳转到商品页面
-  uni.switchTab({
-    url: '/pages/products/index'
-  });
-};
+  uni.switchTab({ url: '/pages/products/index' })
+}
 
-// 生命周期
 onMounted(() => {
-  if (!checkLoginStatus()) return;
-  getStatusBarHeight();
-  console.log('我的收藏页面加载');
-  // TODO: 从本地存储或后端获取收藏列表
-  // const storedFavorites = uni.getStorageSync('favorites') || [];
-  // favoritesList.value = storedFavorites;
-});
+  if (!checkLoginStatus()) return
+  statusBarHeight.value = getNavBarHeight()
+  loadFavorites()
+})
 </script>
 
 <style>

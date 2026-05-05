@@ -133,267 +133,177 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue'
+import { homeApi } from '../../api/home'
 
-// 响应式数据
-const currentTime = ref('');
-const hours = ref('00');
-const minutes = ref('00');
-const seconds = ref('00');
-const searchKeyword = ref('');
-const searchFocus = ref(false);
-const statusBarHeight = ref(0);
+const currentTime = ref('')
+const hours = ref('00')
+const minutes = ref('00')
+const seconds = ref('00')
+const searchKeyword = ref('')
+const searchFocus = ref(false)
+const statusBarHeight = ref(0)
+const pageLoading = ref(true)
 
-// 获取导航栏高度（兼容小程序和H5）
+const swiperList = ref([])
+const seckillList = ref([])
+const categoryList = ref([])
+const hotList = ref([])
+const serviceList = ref([])
+const unreadCount = ref(0)
+
 const getNavBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
-  let navBarHeight = 0;
-
+  const systemInfo = uni.getSystemInfoSync()
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  let navBarHeight = 0
   if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight
   } else if (systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = systemInfo.statusBarHeight + 44;
+    navBarHeight = systemInfo.statusBarHeight + 44
   } else {
-    navBarHeight = 44;
+    navBarHeight = 44
   }
+  return Math.round(navBarHeight)
+}
 
-  return Math.round(navBarHeight);
-};
-
-// 计算状态栏高度
 const getStatusBarHeight = () => {
-  statusBarHeight.value = getNavBarHeight();
-};
+  statusBarHeight.value = getNavBarHeight()
+}
 
-// 轮播图数据
-const swiperList = ref([
-    { id: 1, image: '/static/alice.png', title: '爱宝贝儿孕婴生活馆' },
-    { id: 2, image: '/static/alice.png', title: '新品上市' },
-    { id: 3, image: '/static/alice.png', title: '会员专享优惠' }
-]);
+const loadHomeData = async () => {
+  try {
+    const res = await homeApi.getHomeData()
+    if (res && res.data) {
+      swiperList.value = res.data.banners || []
+      seckillList.value = (res.data.seckillProducts || []).map(item => ({
+        id: item.id,
+        image: item.image,
+        name: item.name,
+        currentPrice: item.price,
+        originalPrice: item.originalPrice
+      }))
+      categoryList.value = res.data.categories || []
+      hotList.value = (res.data.hotProducts || []).map(item => ({
+        id: item.id,
+        image: item.image,
+        name: item.name,
+        price: item.price,
+        sales: item.sales
+      }))
+      serviceList.value = res.data.services || []
+      unreadCount.value = res.data.unreadCount || 0
+    }
+  } catch (e) {
+    console.error('首页数据加载失败:', e)
+  } finally {
+    pageLoading.value = false
+  }
+}
 
-// 模拟数据
-const seckillList = ref([
-    { id: 1, image: '/static/alice.png', name: '爱他美白金版奶粉', currentPrice: '199', originalPrice: '299' },
-    { id: 2, image: '/static/alice.png', name: '花王纸尿裤', currentPrice: '89', originalPrice: '129' },
-    { id: 3, image: '/static/alice.png', name: '婴儿连体衣', currentPrice: '59', originalPrice: '99' },
-    { id: 4, image: '/static/alice.png', name: '婴儿安抚玩具', currentPrice: '39', originalPrice: '69' }
-]);
+let timeInterval = null
+let countdownInterval = null
 
-const categoryList = ref([
-	{ id: 1, icon: '🥛', name: '奶粉' },
-	{ id: 2, icon: '👶', name: '尿裤' },
-	{ id: 3, icon: '👕', name: '童装' },
-	{ id: 4, icon: '🧸', name: '玩具' },
-	{ id: 5, icon: '🍼', name: '喂养' },
-	{ id: 6, icon: '🛁', name: '洗护' },
-	{ id: 7, icon: '💊', name: '营养' },
-	{ id: 8, icon: '🚗', name: '出行' }
-]);
-
-const hotList = ref([
-	{ id: 1, image: '/static/alice.png', name: '爱他美白金版奶粉', price: '199', sales: 1258 },
-	{ id: 2, image: '/static/alice.png', name: '花王纸尿裤', price: '89', sales: 2341 },
-	{ id: 3, image: '/static/alice.png', name: '婴儿连体衣', price: '59', sales: 892 },
-	{ id: 4, image: '/static/alice.png', name: '婴儿安抚玩具', price: '39', sales: 1567 }
-]);
-
-const serviceList = ref([
-	{ id: 1, icon: '🛁', name: '婴儿洗澡', url: '/pages/service/bath/bath' },
-	{ id: 2, icon: '📖', name: '宝爸必看', url: '/pages/service/dad/dad' },
-	{ id: 3, icon: '🎠', name: '儿童游乐场', url: '/pages/service/playground/playground' },
-	{ id: 4, icon: '🎨', name: '早教课程', url: '/pages/service/early-education/early-education' },
-	{ id: 5, icon: '✂️', name: '婴儿理发', url: '/pages/service/hair/hair' },
-	{ id: 6, icon: '📸', name: '满月照', url: '/pages/service/photo/photo' }
-]);
-
-// 定时器
-let timeInterval = null;
-let countdownInterval = null;
-
-// 方法
 const updateCurrentTime = () => {
-	const now = new Date();
-	const hours = now.getHours().toString().padStart(2, '0');
-	const minutes = now.getMinutes().toString().padStart(2, '0');
-	currentTime.value = `${hours}:${minutes}`;
-};
+  const now = new Date()
+  const h = now.getHours().toString().padStart(2, '0')
+  const m = now.getMinutes().toString().padStart(2, '0')
+  currentTime.value = `${h}:${m}`
+}
 
 const updateCountdown = () => {
-	// 模拟倒计时，假设距结束还有2小时30分钟
-	const totalSeconds = 2 * 3600 + 30 * 60;
-	let remainingSeconds = totalSeconds;
-	
-	const calculateTime = () => {
-		remainingSeconds = (remainingSeconds - 1 + totalSeconds) % totalSeconds;
-		
-		hours.value = Math.floor(remainingSeconds / 3600).toString().padStart(2, '0');
-		minutes.value = Math.floor((remainingSeconds % 3600) / 60).toString().padStart(2, '0');
-		seconds.value = (remainingSeconds % 60).toString().padStart(2, '0');
-	};
-	
-	calculateTime();
-	countdownInterval = setInterval(calculateTime, 1000);
-};
+  const totalSeconds = 2 * 3600 + 30 * 60
+  let remainingSeconds = totalSeconds
+  const calculateTime = () => {
+    remainingSeconds = (remainingSeconds - 1 + totalSeconds) % totalSeconds
+    hours.value = Math.floor(remainingSeconds / 3600).toString().padStart(2, '0')
+    minutes.value = Math.floor((remainingSeconds % 3600) / 60).toString().padStart(2, '0')
+    seconds.value = (remainingSeconds % 60).toString().padStart(2, '0')
+  }
+  calculateTime()
+  countdownInterval = setInterval(calculateTime, 1000)
+}
 
-// 事件处理
 const handleMessage = () => {
-	console.log('查看消息');
-	uni.navigateTo({
-		url: '/pages/message/message'
-	});
-};
+  uni.navigateTo({ url: '/pages/message/message' })
+}
 
 const handleMember = () => {
-	console.log('会员中心');
-	// TODO: 跳转到会员中心页
-	// uni.navigateTo({
-	//     url: '/pages/member/center'
-	// });
-};
+  uni.navigateTo({ url: '/pages/member/sign/sign' })
+}
 
-const handleSearch = (keyword) => {
-	console.log('搜索:', keyword);
-};
-
-// 搜索框确认事件
 const handleSearchConfirm = () => {
-	if (!searchKeyword.value.trim()) {
-		uni.showToast({
-			title: '请输入搜索内容',
-			icon: 'none',
-			duration: 2000
-		});
-		return;
-	}
-	console.log('执行搜索:', searchKeyword.value);
-	// TODO: 调用后端搜索接口
-	// 这里可以添加跳转到搜索结果页的逻辑
-};
+  if (!searchKeyword.value.trim()) {
+    uni.showToast({ title: '请输入搜索内容', icon: 'none', duration: 2000 })
+    return
+  }
+  uni.setStorageSync('searchKeyword', searchKeyword.value)
+  uni.switchTab({ url: '/pages/products/index' })
+}
 
-// 搜索框获得焦点
-const handleSearchFocus = () => {
-	searchFocus.value = true;
-	console.log('搜索框获得焦点');
-};
+const handleSearchFocus = () => { searchFocus.value = true }
+const handleSearchBlur = () => { searchFocus.value = false }
+const handleSearchClear = () => { searchKeyword.value = '' }
 
-// 搜索框失去焦点
-const handleSearchBlur = () => {
-	searchFocus.value = false;
-	console.log('搜索框失去焦点');
-};
-
-// 清空搜索内容
-const handleSearchClear = () => {
-	searchKeyword.value = '';
-	console.log('清空搜索内容');
-};
-
-// 点击热门标签搜索
 const handleSearchTag = (tag) => {
-	searchKeyword.value = tag;
-	console.log('点击热门标签:', tag);
-	// TODO: 可以直接执行搜索或跳转到搜索结果页
-};
+  searchKeyword.value = tag
+  uni.setStorageSync('searchKeyword', tag)
+  uni.switchTab({ url: '/pages/products/index' })
+}
 
-// 轮播图点击事件
 const handleSwiperItem = (item) => {
-	console.log('点击轮播图:', item);
-	// TODO: 跳转到活动详情页或商品列表页
-	// uni.navigateTo({
-	//     url: `/pages/activity/detail?id=${item.id}`
-	// });
-};
+  if (item.productId) {
+    uni.navigateTo({ url: `/pages/product-detail/index?id=${item.productId}` })
+  }
+}
 
 const handleMoreSeckill = () => {
-	console.log('更多秒杀');
-	// 跳转到商品页的秒杀分类
-	uni.setStorageSync('selectedCategoryId', 'seckill');
-	uni.switchTab({
-		url: '/pages/products/index'
-	});
-};
+  uni.setStorageSync('selectedCategoryId', 'seckill')
+  uni.switchTab({ url: '/pages/products/index' })
+}
 
 const handleSeckillItem = (id) => {
-	console.log('查看秒杀商品:', id);
-	// 跳转到商品详情页
-	uni.navigateTo({
-		url: `/pages/product-detail/index?id=${id}&isSeckill=true`
-	});
-};
+  uni.navigateTo({ url: `/pages/product-detail/index?id=${id}&isSeckill=true` })
+}
 
 const handleCategory = (id) => {
-	console.log('查看分类:', id);
-	// 使用本地存储传递分类ID
-	uni.setStorageSync('selectedCategoryId', id);
-	// 跳转到现有的商品页面，保持tabBar可见
-	uni.switchTab({
-		url: '/pages/products/index'
-	});
-};
+  uni.setStorageSync('selectedCategoryId', id)
+  uni.switchTab({ url: '/pages/products/index' })
+}
 
 const handleMoreHot = () => {
-	console.log('更多爆款');
-	// 跳转到爆款推荐页面
-	uni.navigateTo({
-		url: '/pages/hot/index'
-	});
-};
+  uni.navigateTo({ url: '/pages/hot/index' })
+}
 
 const handleHotItem = (id) => {
-	console.log('查看商品:', id);
-	// 跳转到商品详情页
-	uni.navigateTo({
-	    url: `/pages/product-detail/index?id=${id}`
-	});
-};
+  uni.navigateTo({ url: `/pages/product-detail/index?id=${id}` })
+}
 
 const handleMoreService = () => {
-	console.log('更多服务');
-	// TODO: 跳转到服务列表页
-	// uni.navigateTo({
-	//     url: '/pages/service/list'
-	// });
-};
+  uni.showToast({ title: '服务列表开发中', icon: 'none' })
+}
 
-const handleService = (id) => {
-	console.log('查看服务:', id);
-	// 根据id找到对应的服务
-	const service = serviceList.value.find(item => item.id === id);
-	if (service && service.url) {
-		// 跳转到对应的服务页面
-		uni.navigateTo({
-			url: service.url
-		});
-	} else {
-		// 服务功能开发中
-		uni.showToast({
-			title: '服务功能开发中',
-			icon: 'none'
-		});
-	}
-};
+const handleService = (item) => {
+  if (item.url) {
+    uni.navigateTo({ url: item.url })
+  } else if (item.id) {
+    uni.navigateTo({ url: `/pages/service/booking/booking?id=${item.id}` })
+  } else {
+    uni.showToast({ title: '服务功能开发中', icon: 'none' })
+  }
+}
 
-// 生命周期
 onMounted(() => {
-	// 获取状态栏高度
-	getStatusBarHeight();
-	
-	// 优先执行关键渲染任务
-	updateCurrentTime();
-	timeInterval = setInterval(updateCurrentTime, 60000);
-	
-	// 延迟执行非关键任务，给页面渲染留出时间
-	setTimeout(() => {
-		updateCountdown();
-	}, 500);
-});
+  getStatusBarHeight()
+  updateCurrentTime()
+  timeInterval = setInterval(updateCurrentTime, 60000)
+  setTimeout(() => { updateCountdown() }, 500)
+  loadHomeData()
+})
 
 onUnmounted(() => {
-	if (timeInterval) clearInterval(timeInterval);
-	if (countdownInterval) clearInterval(countdownInterval);
-});
+  if (timeInterval) clearInterval(timeInterval)
+  if (countdownInterval) clearInterval(countdownInterval)
+})
 </script>
 
 <style>

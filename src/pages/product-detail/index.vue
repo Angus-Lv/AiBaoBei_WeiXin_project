@@ -121,336 +121,189 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue'
+import { productApi } from '../../api/product'
+import { cartApi } from '../../api/cart'
+import { favoritesApi } from '../../api/favorites'
+import { orderApi } from '../../api/order'
 
-// 响应式数据
+const statusBarHeight = ref(0)
+const pageLoading = ref(true)
+
 const product = ref({
-  id: 0,
-  name: '',
-  image: '/static/alice.png',
-  images: [],
-  detailImages: [],
-  price: '',
-  originalPrice: '',
-  spec: '',
-  sales: 0,
-  stock: 0,
-  isSeckill: false,
-  packages: []
-});
+  id: 0, name: '', image: '/static/alice.png',
+  images: [], detailImages: [], price: '', originalPrice: '',
+  spec: '', sales: 0, stock: 0, isSeckill: false, packages: []
+})
 
-// 状态栏高度
-const statusBarHeight = ref(0);
-
-// 获取导航栏高度（兼容小程序和H5）
 const getNavBarHeight = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect();
-  let navBarHeight = 0;
-
+  const systemInfo = uni.getSystemInfoSync()
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  let navBarHeight = 0
   if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight;
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight
   } else if (systemInfo && systemInfo.statusBarHeight) {
-    navBarHeight = systemInfo.statusBarHeight + 44;
+    navBarHeight = systemInfo.statusBarHeight + 44
   } else {
-    navBarHeight = 44;
+    navBarHeight = 44
   }
+  return Math.round(navBarHeight)
+}
 
-  return Math.round(navBarHeight);
-};
+const isFavorite = ref(false)
+const showBuyModal = ref(false)
+const modalType = ref('buy')
+const quantity = ref(1)
+const selectedPackage = ref(0)
 
-// 计算状态栏高度
-const getStatusBarHeight = () => {
-  statusBarHeight.value = getNavBarHeight();
-};
-
-
-
-// 收藏相关
-const isFavorite = ref(false);
-
-// 购买弹窗相关
-const showBuyModal = ref(false);
-const modalType = ref('buy'); // buy 或 cart
-const quantity = ref(1);
-const selectedPackage = ref(0);
-
-// 计算属性：总价
 const totalPrice = computed(() => {
   if (product.value.packages && product.value.packages.length > 0 && selectedPackage.value < product.value.packages.length) {
-    return (parseFloat(product.value.packages[selectedPackage.value].price) * quantity.value).toFixed(2);
+    return (parseFloat(product.value.packages[selectedPackage.value].price) * quantity.value).toFixed(2)
   }
-  return (parseFloat(product.value.price) * quantity.value).toFixed(2);
-});
+  return (parseFloat(product.value.price) * quantity.value).toFixed(2)
+})
 
-// 生命周期
-onMounted(() => {
-  // 计算状态栏高度
-  getStatusBarHeight();
-  
-  // 获取路由参数
-  const pages = getCurrentPages();
-  const currentPage = pages[pages.length - 1];
-  const options = currentPage.options || {};
-  const id = options.id;
-  const isSeckill = options.isSeckill === 'true';
-  
-  console.log('商品ID:', id, '是否秒杀:', isSeckill);
-  
-  // 模拟获取商品详情
-  getProductDetail(id, isSeckill);
-  
-  // 检查是否已收藏
-  checkFavorite(id);
-});
-
-onUnmounted(() => {
-  // 清理工作
-});
-
-// 获取商品详情
-const getProductDetail = (id, isSeckill) => {
-  // 模拟商品数据
-  const productData = {
-    1: {
-      id: 1,
-      name: '爱他美白金版奶粉',
-      image: '/static/alice.png',
-      images: ['/static/alice.png', '/static/alice.png', '/static/alice.png'],
-      detailImages: ['/static/alice.png', '/static/alice.png'],
-      price: '199',
-      originalPrice: '299',
-      spec: '800g/罐',
-      sales: 1258,
-      stock: 200,
-      isSeckill: true,
-      packages: [
-        { name: '单罐', price: '199' },
-        { name: '两罐套装', price: '380' },
-        { name: '三罐套装', price: '550' }
-      ]
-    },
-    2: {
-      id: 2,
-      name: '花王纸尿裤',
-      image: '/static/alice.png',
-      images: ['/static/alice.png', '/static/alice.png'],
-      detailImages: ['/static/alice.png'],
-      price: '89',
-      originalPrice: '129',
-      spec: 'M码 64片/包',
-      sales: 2341,
-      stock: 350,
-      isSeckill: true,
-      packages: [
-        { name: '单包', price: '89' },
-        { name: '两包套装', price: '160' }
-      ]
-    },
-    3: {
-      id: 3,
-      name: '婴儿连体衣',
-      image: '/static/alice.png',
-      images: ['/static/alice.png'],
-      detailImages: [],
-      price: '59',
-      originalPrice: '99',
-      spec: '1-3岁 粉色',
-      sales: 892,
-      stock: 150,
-      isSeckill: true,
-      packages: []
-    },
-    4: {
-      id: 4,
-      name: '婴儿安抚玩具',
-      image: '/static/alice.png',
-      images: ['/static/alice.png', '/static/alice.png', '/static/alice.png'],
-      detailImages: ['/static/alice.png', '/static/alice.png', '/static/alice.png'],
-      price: '39',
-      originalPrice: '69',
-      spec: '毛绒玩具',
-      sales: 1567,
-      stock: 300,
-      isSeckill: true,
-      packages: []
-    },
-    5: {
-      id: 5,
-      name: '贝亲奶瓶',
-      image: '/static/alice.png',
-      images: ['/static/alice.png', '/static/alice.png'],
-      detailImages: ['/static/alice.png'],
-      price: '79',
-      originalPrice: '99',
-      spec: '240ml',
-      sales: 987,
-      stock: 150,
-      isSeckill: true,
-      packages: []
-    },
-    6: {
-      id: 6,
-      name: '婴儿湿巾',
-      image: '/static/alice.png',
-      images: ['/static/alice.png'],
-      detailImages: [],
-      price: '29',
-      originalPrice: '49',
-      spec: '80抽/包',
-      sales: 3456,
-      stock: 500,
-      isSeckill: true,
-      packages: []
+const loadProductDetail = async (id) => {
+  try {
+    pageLoading.value = true
+    const res = await productApi.getDetail(id)
+    if (res && res.data) {
+      const item = res.data
+      product.value = {
+        id: item.id,
+        name: item.name || '商品名称',
+        image: item.mainImage || item.images?.[0] || '/static/alice.png',
+        images: item.images || [item.mainImage].filter(Boolean) || ['/static/alice.png'],
+        detailImages: item.detailImages || [],
+        price: item.price || '0',
+        originalPrice: item.originalPrice || '',
+        spec: item.spec || item.specification || '',
+        sales: item.sales || item.salesCount || 0,
+        stock: item.stock || 0,
+        isSeckill: item.isSeckill || false,
+        packages: item.packages || item.packageOptions || []
+      }
     }
-  };
-  
-  // 设置商品数据
-  const productItem = productData[id] || {
-    id: id,
-    name: '商品名称',
-    image: '/static/alice.png',
-    images: ['/static/alice.png'],
-    detailImages: [],
-    price: '0',
-    originalPrice: '',
-    spec: '商品规格',
-    sales: 0,
-    stock: 0,
-    isSeckill: isSeckill,
-    packages: []
-  };
-  
-  product.value = productItem;
-};
+  } catch (e) {
+    console.error('商品详情加载失败:', e)
+  } finally {
+    pageLoading.value = false
+  }
+}
 
-// 检查是否已收藏
-const checkFavorite = (productId) => {
-  // 模拟从本地存储获取收藏状态
-  const favorites = uni.getStorageSync('favorites') || [];
-  isFavorite.value = favorites.includes(productId.toString());
-};
+const checkFavorite = async (productId) => {
+  try {
+    const res = await favoritesApi.getList({ productId })
+    if (res && res.data) {
+      const list = res.data.records || res.data.list || res.data || []
+      isFavorite.value = list.some(f => f.productId === Number(productId) || f.id === Number(productId))
+    }
+  } catch (e) {
+    const favs = uni.getStorageSync('favorites') || []
+    isFavorite.value = favs.includes(String(productId))
+  }
+}
 
+onMounted(() => {
+  statusBarHeight.value = getNavBarHeight()
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1]
+  const options = currentPage.$page?.options || currentPage.options || {}
+  const id = options.id
+  if (id) {
+    loadProductDetail(id)
+    checkFavorite(id)
+  }
+})
 
-
-// 图片预览
 const previewImage = (index) => {
   if (product.value.images && product.value.images.length > 0) {
-    uni.previewImage({
-      current: product.value.images[index],
-      urls: product.value.images,
-      indicator: 'default',
-      loop: true
-    });
+    uni.previewImage({ current: product.value.images[index], urls: product.value.images, indicator: 'default', loop: true })
   }
-};
+}
 
-// 预览商品详情图片
 const previewDetailImage = (index) => {
   if (product.value.detailImages && product.value.detailImages.length > 0) {
-    uni.previewImage({
-      current: product.value.detailImages[index],
-      urls: product.value.detailImages,
-      indicator: 'default',
-      loop: true
-    });
+    uni.previewImage({ current: product.value.detailImages[index], urls: product.value.detailImages, indicator: 'default', loop: true })
   }
-};
+}
 
-// 预览购买弹窗图片
 const previewModalImage = () => {
   if (product.value.image) {
-    uni.previewImage({
-      current: product.value.image,
-      urls: [product.value.image],
-      indicator: 'default',
-      loop: true
-    });
+    uni.previewImage({ current: product.value.image, urls: [product.value.image], indicator: 'default', loop: true })
   }
-};
+}
 
-
-
-// 事件处理
-const handleBack = () => {
-  uni.navigateBack();
-};
+const handleBack = () => { uni.navigateBack() }
 
 const handleCart = () => {
-  modalType.value = 'cart';
-  showBuyModal.value = true;
-};
+  modalType.value = 'cart'
+  showBuyModal.value = true
+}
 
-const handleFavorite = () => {
-  isFavorite.value = !isFavorite.value;
-  
-  // 模拟保存收藏状态到本地存储
-  let favorites = uni.getStorageSync('favorites') || [];
-  if (isFavorite.value) {
-    if (!favorites.includes(product.value.id.toString())) {
-      favorites.push(product.value.id.toString());
+const handleFavorite = async () => {
+  try {
+    if (isFavorite.value) {
+      await favoritesApi.remove(product.value.id)
+      isFavorite.value = false
+    } else {
+      await favoritesApi.add({ productId: product.value.id })
+      isFavorite.value = true
     }
-  } else {
-    favorites = favorites.filter(id => id !== product.value.id.toString());
+    uni.showToast({ title: isFavorite.value ? '收藏成功' : '取消收藏', icon: 'success', duration: 2000 })
+  } catch (e) {
+    isFavorite.value = !isFavorite.value
+    const favs = uni.getStorageSync('favorites') || []
+    if (isFavorite.value) {
+      if (!favs.includes(String(product.value.id))) favs.push(String(product.value.id))
+    } else {
+      uni.setStorageSync('favorites', favs.filter(id => id !== String(product.value.id)))
+    }
+    uni.setStorageSync('favorites', favs)
+    uni.showToast({ title: isFavorite.value ? '收藏成功' : '取消收藏', icon: 'success', duration: 2000 })
   }
-  uni.setStorageSync('favorites', favorites);
-  
-  uni.showToast({
-    title: isFavorite.value ? '收藏成功' : '取消收藏',
-    icon: 'success',
-    duration: 2000
-  });
-};
+}
 
 const handleBuy = () => {
-  modalType.value = 'buy';
-  showBuyModal.value = true;
-};
+  modalType.value = 'buy'
+  showBuyModal.value = true
+}
 
-// 购买弹窗相关
-const decreaseQuantity = () => {
-  if (quantity.value > 1) {
-    quantity.value--;
-  }
-};
+const decreaseQuantity = () => { if (quantity.value > 1) quantity.value-- }
+const increaseQuantity = () => { if (quantity.value < product.value.stock) quantity.value++ }
 
-const increaseQuantity = () => {
-  if (quantity.value < product.value.stock) {
-    quantity.value++;
+const confirmBuy = async () => {
+  try {
+    if (modalType.value === 'cart') {
+      await cartApi.add({
+        productId: product.value.id,
+        quantity: quantity.value,
+        packageIndex: selectedPackage.value
+      })
+      showBuyModal.value = false
+      uni.showToast({ title: '加入购物车成功', icon: 'success', duration: 2000 })
+    } else {
+      const orderData = {
+        items: [{
+          productId: product.value.id,
+          quantity: quantity.value,
+          packageIndex: selectedPackage.value
+        }],
+        totalAmount: totalPrice.value
+      }
+      const res = await orderApi.create(orderData)
+      showBuyModal.value = false
+      if (res && res.data && res.data.id) {
+        uni.navigateTo({ url: `/pages/profile/order-detail?id=${res.data.id}` })
+      } else {
+        uni.showToast({ title: '购买成功', icon: 'success', duration: 2000 })
+      }
+    }
+  } catch (e) {
+    console.error('操作失败:', e)
+    uni.showToast({ title: '操作失败，请重试', icon: 'none', duration: 2000 })
   }
-};
-
-const confirmBuy = () => {
-  if (modalType.value === 'cart') {
-    console.log('确认加入购物车:', {
-      product: product.value,
-      quantity: quantity.value,
-      selectedPackage: product.value.packages[selectedPackage.value],
-      totalPrice: totalPrice.value
-    });
-    
-    showBuyModal.value = false;
-    uni.showToast({
-      title: '加入购物车成功',
-      icon: 'success',
-      duration: 2000
-    });
-  } else {
-    console.log('确认购买:', {
-      product: product.value,
-      quantity: quantity.value,
-      selectedPackage: product.value.packages[selectedPackage.value],
-      totalPrice: totalPrice.value
-    });
-    
-    showBuyModal.value = false;
-    uni.showToast({
-      title: '购买成功',
-      icon: 'success',
-      duration: 2000
-    });
-  }
-};
+}
 </script>
 
 <style>

@@ -26,7 +26,7 @@
 				:key="tier.id"
 				class="tier-card"
 				:class="{ 'selected': selectedTierId === tier.id }"
-				@tap="selectTier(tier)"
+				@tap="selectTier(tier.id)"
 			>
 				<view class="tier-header">
 					<text class="tier-amount">¥{{ tier.amount }}</text>
@@ -79,137 +79,120 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue'
+import { memberApi } from '../../../api/member'
 
-// 模拟数据
-const memberLevel = ref('VIP1'); // 会员等级
-const userPoints = ref(100); // 用户积分
-const userBalance = ref(0); // 用户余额
-const selectedTierId = ref(null); // 选中的充值档位
-const showSuccessToast = ref(false); // 显示充值成功提示
-const successAmount = ref(0); // 充值成功金额
+const statusBarHeight = ref(0)
+const pageLoading = ref(true)
+const memberLevel = ref('VIP1')
+const userPoints = ref(0)
+const userBalance = ref(0)
+const selectedTierId = ref(null)
+const showSuccessToast = ref(false)
+const successAmount = ref(0)
+const rechargeTiers = ref([])
 
-// 检查登录状态（已关闭）
-const checkLoginStatus = () => {
-	return true;
-};
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync()
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  let navBarHeight = 0
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44
+  } else {
+    navBarHeight = 44
+  }
+  return Math.round(navBarHeight)
+}
 
-// 初始化用户信息
-const initUserInfo = () => {
-	const storedUserInfo = uni.getStorageSync('userInfo');
-	if (storedUserInfo) {
-		memberLevel.value = storedUserInfo.vipLevel || 'VIP1';
-		userPoints.value = storedUserInfo.points || 100;
-		userBalance.value = storedUserInfo.balance || 0;
-	}
-};
+const loadRechargeData = async () => {
+  try {
+    pageLoading.value = true
+    const storedUserInfo = uni.getStorageSync('userInfo')
+    if (storedUserInfo) {
+      memberLevel.value = storedUserInfo.memberLevel || storedUserInfo.vipLevel || 'VIP1'
+      userPoints.value = storedUserInfo.points || 0
+      userBalance.value = storedUserInfo.balance || 0
+    }
 
-// 保存用户余额
-const saveUserBalance = (newBalance) => {
-	const storedUserInfo = uni.getStorageSync('userInfo');
-	if (storedUserInfo) {
-		storedUserInfo.balance = newBalance;
-		uni.setStorageSync('userInfo', storedUserInfo);
-	}
-};
+    try {
+      const res = await memberApi.getRechargeTiers()
+      if (res && res.data) {
+        rechargeTiers.value = (res.data || []).map(item => ({
+          id: item.id,
+          amount: item.amount,
+          bonus: item.bonus || item.extraAmount || 0,
+          tag: item.tag || ''
+        }))
+      }
+    } catch (e) {
+      rechargeTiers.value = [
+        { id: 1, amount: 100, bonus: 5, tag: '推荐' },
+        { id: 2, amount: 200, bonus: 15, tag: '超值' },
+        { id: 3, amount: 500, bonus: 50, tag: '热门' },
+        { id: 4, amount: 1000, bonus: 120, tag: '豪礼' },
+        { id: 5, amount: 2000, bonus: 280, tag: '尊享' }
+      ]
+    }
+  } catch (e) {
+    console.error('充值数据加载失败:', e)
+  } finally {
+    pageLoading.value = false
+  }
+}
 
-// 充值档位数据
-const rechargeTiers = ref([
-	{
-		id: 1,
-		amount: 100,
-		bonus: 5,
-		tag: '推荐'
-	},
-	{
-		id: 2,
-		amount: 200,
-		bonus: 15,
-		tag: '超值'
-	},
-	{
-		id: 3,
-		amount: 500,
-		bonus: 50,
-		tag: '热门'
-	},
-	{
-		id: 4,
-		amount: 1000,
-		bonus: 120,
-		tag: '豪礼'
-	},
-	{
-		id: 5,
-		amount: 2000,
-		bonus: 280,
-		tag: '尊享'
-	}
-]);
+const handleBack = () => { uni.navigateBack() }
 
-// 选择充值档位
-const selectTier = (tier) => {
-	selectedTierId.value = tier.id;
-};
+const selectTier = (id) => { selectedTierId.value = id }
 
-// 处理充值
-const handleRecharge = () => {
-	if (!selectedTierId.value) {
-		uni.showToast({
-			title: '请选择充值金额',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	const selectedTier = rechargeTiers.value.find(tier => tier.id === selectedTierId.value);
-	if (selectedTier) {
-		// 模拟充值请求
-		console.log('发起充值请求:', selectedTier);
-		
-		// 预留后端支付接口
-		// 实际项目中这里会调用后端支付API
-		// const paymentResult = await api.recharge(selectedTier.id);
-		
-		// 模拟充值成功
-		setTimeout(() => {
-			const totalAmount = selectedTier.amount + selectedTier.bonus;
-			successAmount.value = totalAmount;
-			
-			// 更新用户余额
-			userBalance.value += totalAmount;
-			saveUserBalance(userBalance.value);
-			
-			showSuccessToast.value = true;
-			
-			// 显示成功信息
-			uni.showToast({
-				title: '充值成功！',
-				icon: 'success'
-			});
-		}, 1000);
-	}
-};
+const handleRecharge = async () => {
+  if (!selectedTierId.value) {
+    uni.showToast({ title: '请选择充值套餐', icon: 'none' })
+    return
+  }
+  const selectedTier = rechargeTiers.value.find(tier => tier.id === selectedTierId.value)
+  if (!selectedTier) return
 
-// 生命周期
-onMounted(() => {
-	if (!checkLoginStatus()) return;
-	initUserInfo();
-});
+  try {
+    const res = await memberApi.recharge({ tierId: selectedTier.id, amount: selectedTier.amount })
+    if (res && res.data) {
+      userBalance.value = res.data.totalBalance || (userBalance.value + selectedTier.amount + selectedTier.bonus)
+      memberLevel.value = res.data.memberLevel || memberLevel.value
+      successAmount.value = res.data.addedAmount || (selectedTier.amount + selectedTier.bonus)
 
-// 继续充值
+      const storedUserInfo = uni.getStorageSync('userInfo')
+      if (storedUserInfo) {
+        storedUserInfo.balance = userBalance.value
+        storedUserInfo.memberLevel = memberLevel.value
+        uni.setStorageSync('userInfo', storedUserInfo)
+      }
+    } else {
+      userBalance.value += selectedTier.amount + selectedTier.bonus
+      successAmount.value = selectedTier.amount + selectedTier.bonus
+    }
+
+    showSuccessToast.value = true
+    uni.showToast({ title: '充值成功！', icon: 'success' })
+  } catch (e) {
+    console.error('充值失败:', e)
+  }
+}
+
 const continueRecharge = () => {
-	showSuccessToast.value = false;
-	selectedTierId.value = null;
-};
+  showSuccessToast.value = false
+  selectedTierId.value = null
+}
 
-// 返回个人中心
 const backToProfile = () => {
-	showSuccessToast.value = false;
-	uni.navigateBack({
-		delta: 1
-	});
-};
+  showSuccessToast.value = false
+  uni.navigateBack({ delta: 1 })
+}
+
+onMounted(() => {
+  statusBarHeight.value = getNavBarHeight()
+  loadRechargeData()
+})
 </script>
 
 <style scoped>

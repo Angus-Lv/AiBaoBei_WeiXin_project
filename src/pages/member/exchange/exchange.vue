@@ -62,125 +62,87 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue'
+import { memberApi } from '../../../api/member'
 
-// 用户积分
-const userPoints = ref(100); // 默认积分
+const userPoints = ref(0)
+const exchangeItems = ref([])
+const selectedItem = ref(null)
+const showSuccessToast = ref(false)
+const pageLoading = ref(true)
 
-// 检查登录状态（已关闭）
-const checkLoginStatus = () => {
-	return true;
-};
+const loadExchangeData = async () => {
+  try {
+    pageLoading.value = true
+    const storedUserInfo = uni.getStorageSync('userInfo')
+    userPoints.value = storedUserInfo?.points || 0
 
-// 初始化用户积分
-const initUserPoints = () => {
-	const storedUserInfo = uni.getStorageSync('userInfo');
-	if (storedUserInfo && storedUserInfo.points !== undefined) {
-		userPoints.value = storedUserInfo.points;
-	}
-};
+    try {
+      const res = await memberApi.getPointsProducts()
+      if (res && res.data) {
+        exchangeItems.value = (res.data || []).map(item => ({
+          id: item.id,
+          name: item.name || item.productName,
+          points: item.points || item.requiredPoints || 0,
+          stock: item.stock || 0,
+          image: item.image || item.productImage || ''
+        }))
+      }
+    } catch (e) {
+      exchangeItems.value = [
+        { id: 1, name: '婴儿纸尿裤试用装', points: 200, stock: 50, image: '' },
+        { id: 2, name: '婴儿湿巾大包装', points: 300, stock: 30, image: '' },
+        { id: 3, name: '婴儿润肤霜', points: 400, stock: 20, image: '' },
+        { id: 4, name: '婴儿游泳体验券', points: 500, stock: 10, image: '' }
+      ]
+    }
+  } catch (e) {
+    console.error('兑换数据加载失败:', e)
+  } finally {
+    pageLoading.value = false
+  }
+}
 
-// 保存用户积分
-const saveUserPoints = () => {
-	const storedUserInfo = uni.getStorageSync('userInfo');
-	if (storedUserInfo) {
-		storedUserInfo.points = userPoints.value;
-		uni.setStorageSync('userInfo', storedUserInfo);
-	}
-};
-const exchangeItems = ref([
-	{
-		id: 1,
-		name: '婴儿纸尿裤试用装',
-		points: 200,
-		stock: 50,
-		image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=baby%20diapers%20package%20pink%20background&image_size=square'
-	},
-	{
-		id: 2,
-		name: '婴儿湿巾大包装',
-		points: 300,
-		stock: 30,
-		image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=baby%20wipes%20package%20pink%20background&image_size=square'
-	},
-	{
-		id: 3,
-		name: '婴儿润肤霜',
-		points: 400,
-		stock: 20,
-		image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=baby%20moisturizer%20cream%20pink%20bottle&image_size=square'
-	},
-	{
-		id: 4,
-		name: '婴儿游泳体验券',
-		points: 500,
-		stock: 10,
-		image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=baby%20swimming%20certificate%20pink%20background&image_size=square'
-	}
-]);
+const selectItem = (item) => { selectedItem.value = item }
 
-// 响应式数据
-const selectedItem = ref(null);
-const showSuccessToast = ref(false);
+const handleExchange = async () => {
+  if (!selectedItem.value) {
+    uni.showToast({ title: '请选择要兑换的商品', icon: 'none' })
+    return
+  }
+  if (selectedItem.value.points > userPoints.value) {
+    uni.showToast({ title: '积分不足', icon: 'none' })
+    return
+  }
+  if (selectedItem.value.stock <= 0) {
+    uni.showToast({ title: '商品已售罄', icon: 'none' })
+    return
+  }
 
-// 事件处理
-const selectItem = (item) => {
-	selectedItem.value = item;
-};
+  try {
+    const res = await memberApi.exchangePoints({ productId: selectedItem.value.id })
+    if (res && res.data) {
+      userPoints.value = res.data.remainingPoints || (userPoints.value - selectedItem.value.points)
+      selectedItem.value.stock = res.data.remainingStock || (selectedItem.value.stock - 1)
+      const storedUserInfo = uni.getStorageSync('userInfo')
+      if (storedUserInfo) {
+        storedUserInfo.points = userPoints.value
+        uni.setStorageSync('userInfo', storedUserInfo)
+      }
+    } else {
+      userPoints.value -= selectedItem.value.points
+      selectedItem.value.stock -= 1
+    }
 
-const handleExchange = () => {
-	if (!checkLoginStatus()) return;
-	if (!selectedItem.value) {
-		uni.showToast({
-			title: '请选择要兑换的商品',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	if (selectedItem.value.points > userPoints.value) {
-		uni.showToast({
-			title: '积分不足',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	if (selectedItem.value.stock <= 0) {
-		uni.showToast({
-			title: '商品已售罄',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	// 模拟兑换成功
-	userPoints.value -= selectedItem.value.points;
-	selectedItem.value.stock -= 1;
-	
-	// 保存用户积分
-	saveUserPoints();
-	
-	// 显示成功提示
-	showSuccessToast.value = true;
-	
-	// 3秒后隐藏提示
-	setTimeout(() => {
-		showSuccessToast.value = false;
-	}, 3000);
-	
-	// 显示成功信息
-	uni.showToast({
-		title: '兑换成功！',
-		icon: 'success'
-	});
-};
+    showSuccessToast.value = true
+    setTimeout(() => { showSuccessToast.value = false }, 3000)
+    uni.showToast({ title: '兑换成功！', icon: 'success' })
+  } catch (e) {
+    console.error('兑换失败:', e)
+  }
+}
 
-// 生命周期
-onMounted(() => {
-	if (!checkLoginStatus()) return;
-	initUserPoints();
-});
+onMounted(() => { loadExchangeData() })
 </script>
 
 <style scoped>

@@ -65,11 +65,11 @@
 		<view class="sign-btn-container">
 			<view 
 				class="sign-btn"
-				@tap="handleSign"
-				:class="{ 'signed': hasSignedToday }"
-				:disabled="hasSignedToday"
+				@tap="handleSignIn"
+				:class="{ 'signed': todaySigned }"
+				:disabled="todaySigned"
 			>
-				<text class="sign-btn-text">{{ hasSignedToday ? '今日已签到' : '一键签到' }}</text>
+				<text class="sign-btn-text">{{ todaySigned ? '今日已签到' : '一键签到' }}</text>
 			</view>
 		</view>
 		
@@ -83,122 +83,125 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue'
+import { memberApi } from '../../../api/member'
 
-// 用户数据
-const userPoints = ref(100); // 默认积分
-const dailyPoints = ref(5); // 每日签到积分
-const continuousDays = ref(3); // 连续签到天数
-const hasSignedToday = ref(false); // 今日是否已签到
-const showSuccessToast = ref(false); // 显示签到成功提示
+const statusBarHeight = ref(0)
+const pageLoading = ref(true)
+const userPoints = ref(0)
+const dailyPoints = ref(5)
+const continuousDays = ref(0)
+const todaySigned = ref(false)
 
-// 检查登录状态（已关闭）
-const checkLoginStatus = () => {
-	return true;
-};
-
-// 初始化用户积分
-const initUserPoints = () => {
-	const storedUserInfo = uni.getStorageSync('userInfo');
-	if (storedUserInfo && storedUserInfo.points !== undefined) {
-		userPoints.value = storedUserInfo.points;
-	}
-};
-
-// 保存用户积分
-const saveUserPoints = () => {
-	const storedUserInfo = uni.getStorageSync('userInfo');
-	if (storedUserInfo) {
-		storedUserInfo.points = userPoints.value;
-		uni.setStorageSync('userInfo', storedUserInfo);
-	}
-};
-
-// 签到日历数据
-const calendarDays = ref([]);
-
-// 连续签到福利
+const calendarDays = ref([])
 const continuousRewards = ref([
-	{ days: 3, reward: '额外 10 积分' },
-	{ days: 7, reward: '额外 30 积分' },
-	{ days: 15, reward: '额外 50 积分' },
-	{ days: 30, reward: '额外 100 积分' }
-]);
+  { days: 3, reward: '额外 10 积分' },
+  { days: 7, reward: '额外 30 积分' },
+  { days: 15, reward: '额外 50 积分' },
+  { days: 30, reward: '额外 100 积分' }
+])
 
-// 生成日历数据
-const generateCalendar = () => {
-	const days = [];
-	const today = new Date();
-	const currentDate = today.getDate();
-	const currentMonth = today.getMonth();
-	const currentYear = today.getFullYear();
-	
-	// 生成当月30天的数据
-	for (let i = 1; i <= 30; i++) {
-		const date = new Date(currentYear, currentMonth, i);
-		const isToday = i === currentDate;
-		const isPast = i < currentDate;
-		const isFuture = i > currentDate;
-		const isSigned = isPast && Math.random() > 0.5; // 模拟过去的签到状态
-		
-		days.push({
-			day: i,
-			isToday,
-			isPast,
-			isFuture,
-			isSigned
-		});
-	}
-	
-	calendarDays.value = days;
-};
+const getNavBarHeight = () => {
+  const systemInfo = uni.getSystemInfoSync()
+  const menuBtn = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  let navBarHeight = 0
+  if (menuBtn && systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = (menuBtn.top - systemInfo.statusBarHeight) * 2 + menuBtn.height + systemInfo.statusBarHeight
+  } else if (systemInfo && systemInfo.statusBarHeight) {
+    navBarHeight = systemInfo.statusBarHeight + 44
+  } else {
+    navBarHeight = 44
+  }
+  return Math.round(navBarHeight)
+}
 
-// 事件处理
-const handleSign = () => {
-	if (!checkLoginStatus()) return;
-	if (hasSignedToday.value) {
-		uni.showToast({
-			title: '今日已签到',
-			icon: 'none'
-		});
-		return;
-	}
-	
-	// 模拟签到成功
-	hasSignedToday.value = true;
-	userPoints.value += dailyPoints.value;
-	continuousDays.value += 1;
-	
-	// 保存用户积分
-	saveUserPoints();
-	
-	// 更新日历状态
-	const todayIndex = calendarDays.value.findIndex(day => day.isToday);
-	if (todayIndex !== -1) {
-		calendarDays.value[todayIndex].isSigned = true;
-	}
-	
-	// 显示成功提示
-	showSuccessToast.value = true;
-	
-	// 3秒后隐藏提示
-	setTimeout(() => {
-		showSuccessToast.value = false;
-	}, 3000);
-	
-	// 显示成功信息
-	uni.showToast({
-		title: '签到成功！获得 5 积分',
-		icon: 'success'
-	});
-};
+const loadSignData = async () => {
+  try {
+    pageLoading.value = true
+    const storedUserInfo = uni.getStorageSync('userInfo')
+    userPoints.value = storedUserInfo?.points || 0
 
-// 生命周期
+    try {
+      const statusRes = await memberApi.getSignStatus()
+      if (statusRes && statusRes.data) {
+        todaySigned.value = statusRes.data.todaySigned || false
+        dailyPoints.value = statusRes.data.dailyPoints || 5
+        continuousDays.value = statusRes.data.continuousDays || 0
+      }
+
+      const recordsRes = await memberApi.getSignRecords({ page: 1, pageSize: 30 })
+      if (recordsRes && recordsRes.data) {
+        const records = recordsRes.data.records || recordsRes.data.list || recordsRes.data || []
+        generateCalendar(records)
+      } else {
+        generateCalendar([])
+      }
+    } catch (e) {
+      generateCalendar([])
+    }
+  } catch (e) {
+    console.error('签到数据加载失败:', e)
+  } finally {
+    pageLoading.value = false
+  }
+}
+
+const generateCalendar = (signedRecords) => {
+  const days = []
+  const today = new Date()
+  const currentDate = today.getDate()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
+  const signedDays = signedRecords.map(r => {
+    const d = new Date(r.signDate || r.createTime)
+    return d.getDate()
+  })
+
+  for (let i = 1; i <= 30; i++) {
+    const isToday = i === currentDate
+    const isPast = i < currentDate
+    const isFuture = i > currentDate
+    const isSigned = isToday ? todaySigned.value : signedDays.includes(i)
+
+    days.push({ day: i, isToday, isPast, isFuture, isSigned })
+  }
+
+  calendarDays.value = days
+}
+
+const handleBack = () => { uni.navigateBack() }
+
+const handleSignIn = async () => {
+  if (todaySigned.value) {
+    uni.showToast({ title: '今日已签到', icon: 'none' })
+    return
+  }
+  try {
+    const res = await memberApi.signIn()
+    if (res && res.data) {
+      todaySigned.value = true
+      continuousDays.value = res.data.continuousDays || (continuousDays.value + 1)
+      const earned = res.data.points || dailyPoints.value
+      userPoints.value = res.data.totalPoints || (userPoints.value + earned)
+
+      const storedUserInfo = uni.getStorageSync('userInfo')
+      if (storedUserInfo) {
+        storedUserInfo.points = userPoints.value
+        uni.setStorageSync('userInfo', storedUserInfo)
+      }
+
+      uni.showToast({ title: `签到成功！+${earned}积分`, icon: 'success' })
+      loadSignData()
+    }
+  } catch (e) {
+    console.error('签到失败:', e)
+  }
+}
+
 onMounted(() => {
-	if (!checkLoginStatus()) return;
-	initUserPoints();
-	generateCalendar();
-});
+  statusBarHeight.value = getNavBarHeight()
+  loadSignData()
+})
 </script>
 
 <style scoped>
